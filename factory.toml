@@ -1,0 +1,26 @@
+version = 1
+
+protected = [
+  "docs/architecture.md",
+  "docs/slices/01-scaffold/brief.md",
+  "docs/slices/02-domain-units-money/brief.md",
+  "docs/slices/03-fuel-engine/brief.md",
+  "docs/slices/04-reminders-engine/brief.md",
+  "docs/slices/05-portability/brief.md",
+  "factory.toml",
+  "fixtures/",
+  "gate/Dockerfile",
+]
+
+[toolchain]
+image = "factory-android-gate:openodo"   # built from gate/Dockerfile after slice 01
+lockfile = "gradle/libs.versions.toml"    # every dep/plugin is declared here; changes => rebuild
+
+[test]
+command = "./gradlew --offline --no-daemon :core:test :app:testDebugUnitTest"
+
+[budget]
+usd_per_slice = 4.00   # PROVISIONAL — slice 01 is the measurement
+
+[chain]
+enabled = true
