@@ -5,7 +5,9 @@
 # The gate runs the contract's test command in this image with --network=none.
 # Everything Gradle needs offline is warmed into GRADLE_USER_HOME here.
 
-FROM eclipse-temurin:17-jdk
+# Base mirrors F-Droid's buildserver toolchain (Debian Trixie, OpenJDK 21)
+# so gate results, release CI, and F-Droid rebuilds share one JDK.
+FROM debian:trixie-slim
 
 ARG CMDLINE_TOOLS_ZIP=commandlinetools-linux-11076708_latest.zip
 ARG PLATFORM=android-36
@@ -16,8 +18,10 @@ ENV ANDROID_HOME=/opt/android-sdk \
     GRADLE_USER_HOME=/opt/gradle-home \
     GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
-RUN apt-get update && apt-get install -y --no-install-recommends unzip curl git ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      openjdk-21-jdk-headless unzip curl git ca-certificates \
  && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
  && curl -fsSL -o /tmp/tools.zip https://dl.google.com/android/repository/${CMDLINE_TOOLS_ZIP} \

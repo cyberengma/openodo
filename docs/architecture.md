@@ -20,8 +20,8 @@ until release; renaming pre-release is a planning change, not a worker task.
 
 | Layer | Choice |
 |---|---|
-| JDK | 17 (Temurin) |
-| Build | Gradle via wrapper, AGP 8.x, Kotlin 2.x (K2), KSP |
+| JDK | 21 — Debian Trixie `openjdk-21` (what F-Droid's buildserver ships); bytecode target 17 |
+| Build | Gradle via wrapper, AGP 8.x, Kotlin 2.x (K2), KSP; repositories `google()` + `mavenCentral()` only |
 | SDK | compileSdk 36, targetSdk 36, minSdk 26 (java.time native — no desugaring) |
 | `core` module | Kotlin/JVM, zero Android imports, zero DI, deps: kotlin-stdlib, kotlinx-serialization-json, junit4 + kotlin-test |
 | `app` module | Jetpack Compose (BOM) + Material 3, Hilt (KSP), Room (KSP, schema export to `app/schemas/`), WorkManager, Coil, Vico charts, Robolectric + Turbine for tests |
@@ -89,7 +89,31 @@ no network. Therefore:
   memory.
 - **Handoffs** go to `docs/slices/NN-<name>/handoffs/session-S.md`.
 - **License**: GPL-3.0-only. `LICENSE` at root; SPDX header
-  `// SPDX-License-Identifier: GPL-3.0-only` on every source file.
+  `// SPDX-License-Identifier: GPL-3.0-only` on every source file. Every
+  asset (icon, artwork) carries a FLOSS or CC-BY-SA license note in
+  `docs/release/ASSETS.md`; nothing copied from other apps.
+
+## F-Droid compliance (release-shaped rules, enforced from slice 01)
+
+- `versionCode`/`versionName` are literal values in `app/build.gradle.kts`
+  `defaultConfig`, never computed; each release is a git tag `vX.Y.Z`
+  equal to `versionName` — F-Droid's checkupdates reads both by regex.
+- No `INTERNET` permission, no analytics/crash SDK, no Google Play
+  Services, no JitPack; nothing downloaded at runtime. Zero anti-features.
+- No signing config, keystore, or credentials in the repo. Release APKs
+  are built in CI from a clean checkout of the tag with
+  `./gradlew assembleRelease`, then signed with `apksigner` from
+  **build-tools 34.0.0** (35+ produces APKs F-Droid cannot verify).
+- Reproducible-build hygiene: `tasks.whenTaskAdded { if
+  (name.contains("ArtProfile")) enabled = false }`, no resource shrinker,
+  `vcsInfo` left on, R8 keep rules for coroutines `ServiceLoader`
+  entries, PNGs pre-optimised and `cruncherEnabled = false`.
+- The repo ships `fastlane/metadata/android/en-US/` (short_description
+  ≤ 80 chars, full_description, `images/icon.png`,
+  `images/phoneScreenshots/1.png…`, `changelogs/<versionCode>.txt` ≤ 500
+  chars). `full_description` lists only shipped features.
+- The source repo must be **public** at submission; the factory's
+  private bot repo is mirrored to a public one at v1.0 (operator task).
 
 ## Slice plan
 
@@ -104,7 +128,7 @@ no network. Therefore:
 | 07 | app-shell | Theme, navigation, vehicle CRUD, dashboard | 06, `docs/design/` |
 | 08 | fuel-and-records-ui | Entry forms, lists, filters, receipt photos | 07 |
 | 09 | reminders-ui | Reminders tab, WorkManager daily check, notifications | 07, 04 |
-| 10 | stats-backup-release | Charts, SAF backup/restore, import UI, F-Droid metadata, CI build | 08, 09 |
+| 10 | stats-backup-release | Charts, SAF backup/restore, import UI, fastlane metadata, reproducible release CI, `fdroiddata` YAML draft | 08, 09 |
 
 Briefs exist for 01–05. Briefs for 06–10 are authored in planning once
 `docs/design/` holds the screen specs; the chain stops honestly after 05

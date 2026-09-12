@@ -14,7 +14,9 @@ against it.
 ## Scope: In
 
 1. Gradle wrapper (latest stable 8.x), `settings.gradle.kts` with modules
-   `:core` and `:app`, Kotlin DSL throughout.
+   `:core` and `:app`, Kotlin DSL throughout, `repositories` limited to
+   `google()` and `mavenCentral()` in both plugin and dependency
+   resolution (no JitPack, no custom Maven URLs).
 2. `gradle/libs.versions.toml` declaring **all** of: Kotlin, KSP, AGP,
    kotlinx-serialization (plugin + json), Compose BOM + compose-ui,
    material3, ui-tooling(-preview), activity-compose, navigation-compose,
@@ -27,9 +29,18 @@ against it.
 3. `core/build.gradle.kts`: `kotlin("jvm")`, serialization plugin, JVM
    target 17, deps limited to stdlib + serialization-json + test libs.
 4. `app/build.gradle.kts`: `com.android.application`, compileSdk 36,
-   targetSdk 36, minSdk 26, Compose enabled, Hilt + Room via KSP, Room
-   schema export to `app/schemas/`, `testOptions.unitTests.isIncludeAndroidResources = true`,
-   depends on `:core`. All declared deps wired even though unused.
+   targetSdk 36, minSdk 26, `applicationId = "ca.terradevop.openodo"`,
+   literal `versionCode = 1` and `versionName = "0.1.0"` in
+   `defaultConfig` (never computed), Java/Kotlin target 17 while Gradle
+   runs on JDK 21, Compose enabled, Hilt + Room via KSP, Room schema
+   export to `app/schemas/`,
+   `testOptions.unitTests.isIncludeAndroidResources = true`, the
+   reproducible-build settings from the architecture's F-Droid section
+   (ArtProfile tasks disabled, `cruncherEnabled = false`, no shrinker,
+   `isMinifyEnabled = true` on release with an initial
+   `proguard-rules.pro` keeping the coroutines `ServiceLoader` classes),
+   no `signingConfigs` block, depends on `:core`. All declared deps
+   wired even though unused.
 5. Dependency locking (`dependencyLocking { lockAllConfigurations() }`)
    in both modules and the buildscript; lockfiles generated with
    `--write-locks` and committed.
@@ -77,6 +88,9 @@ against it.
 - `git status` shows committed `gradle.lockfile` files for `core`, `app`,
   and `buildscript-gradle.lockfile` at root.
 - `grep -R "INTERNET" app/src/main/AndroidManifest.xml` returns nothing.
+- `grep -rn "jitpack\|signingConfigs\|storePassword" --include=*.kts .`
+  returns nothing; `grep -n "versionCode\|versionName" app/build.gradle.kts`
+  shows literal values.
 - Every `*.kt`/`*.kts` file's first line is the SPDX header
   (`grep -L "SPDX-License-Identifier: GPL-3.0-only" $(git ls-files '*.kt')`
   prints nothing).
