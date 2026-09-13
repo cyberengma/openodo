@@ -3,8 +3,11 @@
 
 package ca.terradevop.openodo.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -58,6 +61,21 @@ fun OpenOdoApp(viewModel: AppViewModel) {
     val state by viewModel.state.collectAsState()
     var destination by remember { mutableStateOf(Destination.DASHBOARD) }
     var action by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    var lastBack by remember { mutableStateOf(0L) }
+
+    BackHandler {
+        when (destination) {
+            Destination.STATS, Destination.DATA, Destination.TYPES -> destination = Destination.SETTINGS
+            Destination.DASHBOARD -> {
+                val now = System.currentTimeMillis()
+                if (now - lastBack < 2000) (context as? Activity)?.finish()
+                else { lastBack = now; Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show() }
+            }
+            else -> destination = Destination.DASHBOARD
+        }
+        action = null
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -299,6 +317,7 @@ private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit
 
 @Composable
 private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: Vehicle? = null) {
+    BackHandler { cancel() }
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
     var make by remember(initial) { mutableStateOf(initial?.make ?: "") }
     var model by remember(initial) { mutableStateOf(initial?.model ?: "") }
@@ -464,6 +483,7 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
 
 @Composable
 private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
+    BackHandler { cancel() }
     var kind by remember(initial) { mutableStateOf(initial?.kind ?: FuelKind.LIQUID) }
     var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
     var amount by remember(initial) { mutableStateOf((if (initial?.kind == FuelKind.ELECTRIC) initial?.energy?.value else initial?.volume?.value)?.div(1000)?.toString() ?: "") }
@@ -536,6 +556,7 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
 
 @Composable
 private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: ExpenseRecord? = null) {
+    BackHandler { cancel() }
     var title by remember(initial) { mutableStateOf(initial?.title ?: "") }
     var cost by remember(initial) { mutableStateOf(initial?.cost?.minor?.div(100)?.toString() ?: "") }
     var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
@@ -674,6 +695,7 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
 
 @Composable
 private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: Reminder? = null) {
+    BackHandler { cancel() }
     val types = vm.recordTypes().collectAsState(initial = emptyList()).value.filter { it.category == RecordCategory.SERVICE }
     var type by remember(initial) { mutableStateOf(initial?.typeId ?: types.firstOrNull()?.id ?: 0) }
     var months by remember(initial) { mutableStateOf(initial?.intervalMonths?.toString() ?: "") }
