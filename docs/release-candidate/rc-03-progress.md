@@ -15,3 +15,14 @@ Remaining before RC-3 can be closed:
   marker in all forms.
 - Complete statistics visualization/data wiring.
 - Screenshot/accessibility review against the Sleek export.
+
+2026-09-13 additions:
+- Vehicle edit form now includes distance, volume, energy, and currency
+  selectors plus make/model.
+- Receipt "View" action on fuel and expense cards (local ACTION_VIEW, no
+  upload).
+- Import preview now shows per-row report detail (row + code).
+
+Reproducibility proof:
+- Two clean `assembleRelease` runs produce byte-identical APKs.
+- SHA-256: 48583d5f156cf54efc7e3ae5e8c57889acb50c40872c65fe6fec3f2aec66d222
