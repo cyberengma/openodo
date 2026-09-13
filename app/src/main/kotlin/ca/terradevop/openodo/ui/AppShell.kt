@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package ca.terradevop.openodo.ui
 
 import android.content.Intent
@@ -286,11 +288,11 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
                 }
             }
             item { Text("Distance unit", style = MaterialTheme.typography.titleSmall) }
-            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { DistanceUnit.entries.forEach { FilterChip(distance == it, { distance = it }, label = { Text(it.name) }) } } }
+            item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { DistanceUnit.entries.forEach { FilterChip(distance == it, { distance = it }, label = { Text(distanceLabel(it)) }) } } }
             item { Text("Volume unit", style = MaterialTheme.typography.titleSmall) }
-            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { VolumeUnit.entries.forEach { FilterChip(volume == it, { volume = it }, label = { Text(it.name) }) } } }
+            item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { VolumeUnit.entries.forEach { FilterChip(volume == it, { volume = it }, label = { Text(volumeLabel(it)) }) } } }
             item { Text("Energy unit", style = MaterialTheme.typography.titleSmall) }
-            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { EnergyUnit.entries.forEach { FilterChip(energy == it, { energy = it }, label = { Text(it.name) }) } } }
+            item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { EnergyUnit.entries.forEach { FilterChip(energy == it, { energy = it }, label = { Text(energyLabel(it)) }) } } }
             item { OutlinedTextField(currency, { currency = it.uppercase().take(3) }, Modifier.fillMaxWidth(), label = { Text("Currency (ISO code)") }, singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -432,6 +434,10 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     var cost by remember(initial) { mutableStateOf(initial?.totalCost?.minor?.div(100)?.toString() ?: "") }
     var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
     var label by remember(initial) { mutableStateOf(initial?.fuelLabel ?: "") }
+    var station by remember(initial) { mutableStateOf(initial?.stationName ?: "") }
+    var notes by remember(initial) { mutableStateOf(initial?.notes ?: "") }
+    var full by remember(initial) { mutableStateOf(initial?.fullTank ?: true) }
+    var missed by remember(initial) { mutableStateOf(initial?.missedPreviousFillUp ?: false) }
     var receipt by remember(initial) { mutableStateOf(initial?.receiptFileName) }
     var error by remember { mutableStateOf<String?>(null) }
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> receipt = uri?.toString() }
@@ -440,8 +446,16 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item { OutlinedTextField(amount, { amount = it }, Modifier.fillMaxWidth(), label = { Text("Volume (${v.volumeUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel label") }, singleLine = true) }
+            item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { OutlinedTextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
+            item { OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text("Full tank") }
+                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
+                }
+            }
+            item { OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
             item {
                 TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
                     Icon(if (receipt == null) Icons.Outlined.AttachFile else Icons.Filled.CheckCircle, contentDescription = null, Modifier.size(18.dp))
@@ -455,8 +469,8 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
                     OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
                     Button(onClick = {
                         val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-                        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0 || label.isBlank()) error = "Odometer, label, positive volume, and non-negative cost are required"
-                        else save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), kind = FuelKind.LIQUID, volume = Millilitres(a * 1_000), energy = null, unitPrice = null, totalCost = Money(c * 100, v.currency), fuelLabel = label, fullTank = true, missedPreviousFillUp = false, stationName = null, receiptFileName = receipt, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+                        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive volume, and non-negative cost are required"
+                        else save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), kind = FuelKind.LIQUID, volume = Millilitres(a * 1_000), energy = null, unitPrice = null, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { "Fuel" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
                     }, Modifier.weight(1f)) { Text("Save") }
                 }
             }
@@ -477,8 +491,8 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Record type", style = MaterialTheme.typography.titleSmall) }
             item {
-                LazyColumn(Modifier.heightIn(max = 140.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(types) { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    types.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
                 }
             }
             item { OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
@@ -566,8 +580,8 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Service type", style = MaterialTheme.typography.titleSmall) }
             item {
-                LazyColumn(Modifier.heightIn(max = 140.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(types) { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    types.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
                 }
             }
             item { OutlinedTextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
@@ -689,4 +703,22 @@ private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
             item { Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
         }
     }
+}
+
+private fun distanceLabel(u: DistanceUnit) = when (u) {
+    DistanceUnit.METRES -> "Metres (m)"
+    DistanceUnit.KILOMETRES -> "Kilometres (km)"
+    DistanceUnit.MILES -> "Miles (mi)"
+}
+
+private fun volumeLabel(u: VolumeUnit) = when (u) {
+    VolumeUnit.MILLILITRES -> "Millilitres (mL)"
+    VolumeUnit.LITRES -> "Litres (L)"
+    VolumeUnit.US_GALLONS -> "US gallons (gal)"
+    VolumeUnit.UK_GALLONS -> "UK gallons (gal)"
+}
+
+private fun energyLabel(u: EnergyUnit) = when (u) {
+    EnergyUnit.WATT_HOURS -> "Watt-hours (Wh)"
+    EnergyUnit.KILOWATT_HOURS -> "Kilowatt-hours (kWh)"
 }
