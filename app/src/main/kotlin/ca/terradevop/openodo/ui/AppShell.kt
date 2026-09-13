@@ -704,11 +704,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
     ScreenHeader(if (initial == null) "Add reminder" else "Edit reminder", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Service type", style = MaterialTheme.typography.titleSmall) }
-            item {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    types.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
-                }
-            }
+            item { RecordTypeDropdown(types, type) { type = it } }
             item { TextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item { TextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
