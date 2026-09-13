@@ -28,6 +28,11 @@ import ca.terradevop.openodo.core.model.DefaultRecordTypes
 import ca.terradevop.openodo.core.reminders.ResetResolver
 import ca.terradevop.openodo.core.portability.BackupV1
 import ca.terradevop.openodo.core.portability.PortabilityDomain
+import ca.terradevop.openodo.core.portability.ImportResult
+import ca.terradevop.openodo.core.portability.importer.DrivvoImporter
+import ca.terradevop.openodo.core.portability.importer.FuelioImporter
+import ca.terradevop.openodo.core.portability.csv.CsvExport
+import java.io.StringWriter
 
 data class ShellState(
     val vehicles: List<Vehicle> = emptyList(),
@@ -103,5 +108,22 @@ class AppViewModel @Inject constructor(
         val expenses = vehicles.flatMap { this.expenses.observeForVehicle(it.id).first() }
         val reminders = vehicles.flatMap { this.reminders.observeForVehicle(it.id).first() }
         return BackupV1.write(PortabilityDomain(vehicles, types, fuel, expenses, reminders), System.currentTimeMillis(), "0.1.0")
+    }
+
+    suspend fun exportFuelCsv(): String = exportDomain { domain, writer -> CsvExport.fuelEntries(domain, writer) }
+    suspend fun exportExpenseCsv(): String = exportDomain { domain, writer -> CsvExport.expenseRecords(domain, writer) }
+
+    suspend fun importDrivvo(csv: String): ImportResult = DrivvoImporter.import(csv)
+    suspend fun importFuelio(csv: String): ImportResult = FuelioImporter.import(csv)
+
+    private suspend fun exportDomain(write: (PortabilityDomain, StringWriter) -> Unit): String {
+        val domain = PortabilityDomain(
+            vehicles = vehicles.observeActive().first() + vehicles.observeArchived().first(),
+            recordTypes = recordTypes.observeAll().first(),
+            fuelEntries = vehicles.observeActive().first().flatMap { fuels.observeForVehicle(it.id).first() },
+            expenseRecords = vehicles.observeActive().first().flatMap { expenses.observeForVehicle(it.id).first() },
+            reminders = vehicles.observeActive().first().flatMap { reminders.observeForVehicle(it.id).first() },
+        )
+        return StringWriter().also { write(domain, it) }.toString()
     }
 }
