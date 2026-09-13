@@ -113,6 +113,10 @@ class AppViewModel @Inject constructor(
 
     fun recordTypes() = recordTypes.observeAll()
 
+    fun saveRecordType(type: RecordType) {
+        viewModelScope.launch { recordTypes.save(type) }
+    }
+
     suspend fun backupJson(): String {
         val vehicles = vehicles.observeActive().first() + vehicles.observeArchived().first()
         val types = recordTypes.observeAll().first()
@@ -131,9 +135,10 @@ class AppViewModel @Inject constructor(
     fun applyImport(result: ImportResult) {
         viewModelScope.launch {
             val newVehicleId = result.domain.vehicles.firstOrNull()?.let { vehicles.save(it.copy(id = 0)) }
-            result.domain.recordTypes.forEach { recordTypes.save(it.copy(id = 0)) }
+            val typeIdMap = mutableMapOf<Long, Long>()
+            result.domain.recordTypes.forEach { rt -> typeIdMap[rt.id] = recordTypes.save(rt.copy(id = 0)) }
             result.domain.fuelEntries.forEach { fuels.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId)) }
-            result.domain.expenseRecords.forEach { expenses.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId)) }
+            result.domain.expenseRecords.forEach { expenses.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId, typeId = typeIdMap[it.typeId] ?: it.typeId)) }
         }
     }
 

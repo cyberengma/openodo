@@ -8,6 +8,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,6 +50,7 @@ private enum class Destination(val label: String, val icon: ImageVector) {
     SETTINGS("Settings", Icons.Outlined.Settings),
     STATS("Stats", Icons.Outlined.BarChart),
     DATA("Data", Icons.Outlined.Storage),
+    TYPES("Types", Icons.Outlined.Category),
 }
 
 @Composable
@@ -87,9 +90,10 @@ fun OpenOdoApp(viewModel: AppViewModel) {
             )
             Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding), action) { action = null }
             Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding), action == "reminder") { action = null }
-            Destination.SETTINGS -> SettingsScreen(state, Modifier.padding(padding), { destination = Destination.STATS }, { destination = Destination.DATA })
+            Destination.SETTINGS -> SettingsScreen(state, Modifier.padding(padding), { destination = Destination.STATS }, { destination = Destination.DATA }, { destination = Destination.TYPES })
             Destination.STATS -> StatisticsScreen(state, viewModel, Modifier.padding(padding))
             Destination.DATA -> PortabilityScreen(viewModel, Modifier.padding(padding))
+            Destination.TYPES -> RecordTypesScreen(viewModel, Modifier.padding(padding))
         }
     }
 }
@@ -281,11 +285,11 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
 
     ScreenHeader(if (initial == null) "Add vehicle" else "Edit vehicle", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            item { OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Vehicle name") }, singleLine = true) }
+            item { TextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Vehicle name") }, singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(make, { make = it }, Modifier.weight(1f), label = { Text("Make") }, singleLine = true)
-                    OutlinedTextField(model, { model = it }, Modifier.weight(1f), label = { Text("Model") }, singleLine = true)
+                    TextField(make, { make = it }, Modifier.weight(1f), label = { Text("Make") }, singleLine = true)
+                    TextField(model, { model = it }, Modifier.weight(1f), label = { Text("Model") }, singleLine = true)
                 }
             }
             item { Text("Distance unit", style = MaterialTheme.typography.titleSmall) }
@@ -294,7 +298,7 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
             item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { VolumeUnit.entries.forEach { FilterChip(volume == it, { volume = it }, label = { Text(volumeLabel(it)) }) } } }
             item { Text("Energy unit", style = MaterialTheme.typography.titleSmall) }
             item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { EnergyUnit.entries.forEach { FilterChip(energy == it, { energy = it }, label = { Text(energyLabel(it)) }) } } }
-            item { OutlinedTextField(currency, { currency = it.uppercase().take(3) }, Modifier.fillMaxWidth(), label = { Text("Currency (ISO code)") }, singleLine = true) }
+            item { TextField(currency, { currency = it.uppercase().take(3) }, Modifier.fillMaxWidth(), label = { Text("Currency (ISO code)") }, singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
@@ -454,24 +458,24 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
                     FilterChip(kind == FuelKind.ELECTRIC, { kind = FuelKind.ELECTRIC }, label = { Text("Electric charging") }, leadingIcon = { Icon(Icons.Outlined.Bolt, null, Modifier.size(16.dp)) }, modifier = Modifier.weight(1f))
                 }
             }
-            item { OutlinedTextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Date") }, singleLine = true) }
-            item { OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Date") }, singleLine = true) }
+            item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                    OutlinedTextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    TextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    TextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
                 }
             }
-            item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text(if (kind == FuelKind.LIQUID) "Full tank" else "Full charge") }
                     Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
                 }
             }
-            item { OutlinedTextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
-            item { OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
-            item { OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
+            item { TextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
+            item { TextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
+            item { TextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
             item {
                 TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
                     Icon(if (receipt == null) Icons.Outlined.AttachFile else Icons.Filled.CheckCircle, contentDescription = null, Modifier.size(18.dp))
@@ -516,18 +520,16 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
             item { Text("Category", style = MaterialTheme.typography.titleSmall) }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RecordCategory.entries.forEach { c -> FilterChip(category == c, { category = c }, label = { Text(c.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
+                    RecordCategory.entries.forEach { c ->
+                        FilterChip(category == c, { category = c }, leadingIcon = { Icon(categoryIcon(c), null, Modifier.size(16.dp)) }, label = { Text(categoryLabel(c)) })
+                    }
                 }
             }
             item { Text("Record type", style = MaterialTheme.typography.titleSmall) }
-            item {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    categoryTypes.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
-                }
-            }
-            item { OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
-            item { OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { RecordTypeDropdown(categoryTypes, type) { type = it } }
+            item { TextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
+            item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item { Text("Performed by", style = MaterialTheme.typography.titleSmall) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -535,7 +537,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
                     FilterChip(performedBy == PerformedBy.SHOP, { performedBy = PerformedBy.SHOP }, label = { Text("Shop") })
                 }
             }
-            if (performedBy == PerformedBy.SHOP) item { OutlinedTextField(shop, { shop = it }, Modifier.fillMaxWidth(), label = { Text("Shop / mechanic name") }, singleLine = true) }
+            if (performedBy == PerformedBy.SHOP) item { TextField(shop, { shop = it }, Modifier.fillMaxWidth(), label = { Text("Shop / mechanic name") }, singleLine = true) }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -548,6 +550,28 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RecordTypeDropdown(types: List<RecordType>, selected: Long, onSelect: (Long) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = types.firstOrNull { it.id == selected }?.name ?: "Select type"
+    Box {
+        TextField(
+            value = selectedName,
+            onValueChange = {},
+            Modifier.fillMaxWidth(),
+            readOnly = true,
+            label = { Text("Record type") },
+            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+            singleLine = true,
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            types.forEach { t -> DropdownMenuItem(text = { Text(t.name) }, onClick = { onSelect(t.id); expanded = false }) }
+        }
+        // Invisible clickable overlay to open the menu
+        Box(Modifier.matchParentSize().clickable { expanded = true })
     }
 }
 
@@ -634,8 +658,8 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
                     types.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
                 }
             }
-            item { OutlinedTextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
@@ -701,13 +725,51 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
 // ---------- Settings / Stats / Portability ----------
 
 @Composable
-private fun SettingsScreen(state: ShellState, modifier: Modifier, onStats: () -> Unit, onData: () -> Unit) {
+private fun SettingsScreen(state: ShellState, modifier: Modifier, onStats: () -> Unit, onData: () -> Unit, onTypes: () -> Unit) {
     ScreenHeader("Settings", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item { SettingsRow("Active vehicle", state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.currency ?: "No vehicle") }
             item { SettingsRow("Statistics", "Fuel economy and cost trends", onStats) }
+            item { SettingsRow("Record types", "Manage service, repair, upgrade, and other types", onTypes) }
             item { SettingsRow("Backup & migration", "JSON • CSV • Drivvo • Fuelio", onData) }
             item { SettingsRow("Privacy", "Offline-first • zero tracking") }
+        }
+    }
+}
+
+@Composable
+private fun RecordTypesScreen(vm: AppViewModel, modifier: Modifier) {
+    val types = vm.recordTypes().collectAsState(initial = emptyList()).value
+    var adding by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf(RecordCategory.SERVICE) }
+    ScreenHeader("Record types", modifier, actions = {
+        TextButton(onClick = { adding = true }) { Icon(Icons.Filled.Add, contentDescription = "Add type"); Spacer(Modifier.width(4.dp)); Text("Add") }
+    }) {
+        LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (adding) {
+                item {
+                    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            TextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Type name") }, singleLine = true)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                RecordCategory.entries.forEach { c -> FilterChip(category == c, { category = c }, leadingIcon = { Icon(categoryIcon(c), null, Modifier.size(16.dp)) }, label = { Text(categoryLabel(c)) }) }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedButton(onClick = { adding = false; name = "" }, Modifier.weight(1f)) { Text("Cancel") }
+                                Button(onClick = { if (name.isNotBlank()) { vm.saveRecordType(RecordType(category = category, name = name.trim(), isDefault = false)); adding = false; name = "" } }, Modifier.weight(1f), enabled = name.isNotBlank()) { Text("Save") }
+                            }
+                        }
+                    }
+                }
+            }
+            RecordCategory.entries.forEach { c ->
+                val inCategory = types.filter { it.category == c }
+                if (inCategory.isNotEmpty()) {
+                    item { Text(categoryLabel(c), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                    items(inCategory, key = { it.id }) { t -> Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) { Text(t.name, Modifier.padding(14.dp)) } }
+                }
+            }
         }
     }
 }
@@ -716,17 +778,47 @@ private fun SettingsScreen(state: ShellState, modifier: Modifier, onStats: () ->
 private fun StatisticsScreen(state: ShellState, vm: AppViewModel, modifier: Modifier) {
     val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
     val entries = if (v == null) emptyList() else vm.fuelEntries(v.id).collectAsState(initial = emptyList()).value
+    val expenses = if (v == null) emptyList() else vm.expenseRecords(v.id).collectAsState(initial = emptyList()).value
     val stats = if (entries.isEmpty()) null else (FuelStats.of(entries, Clock.systemUTC()) as? FuelStatsResult.Stats)
     val prices = PriceStats.of(entries)
+    var period by remember { mutableIntStateOf(1) }
+    val months = listOf(3, 6, 12, 24)
+    val monthCount = months[period]
+    val buckets = stats?.monthBuckets?.takeLast(monthCount) ?: emptyList()
+    val maxCost = buckets.maxOfOrNull { it.cost.minor.toFloat() } ?: 1f
     ScreenHeader(if (v == null) "Statistics" else "${v.name} statistics", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("3M", "6M", "1Y", "2Y").forEachIndexed { i, label -> FilterChip(period == i, { period = i }, label = { Text(label) }) }
+                }
+            }
             item { MetricCard("Average consumption", stats?.averageMlPer100Km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "Add fuel entries to calculate") }
             item { MetricCard("Total fuel cost", stats?.totalCost?.let { "${it.currency} ${it.minor}" } ?: "No cost data") }
             item { MetricCard("Cost per km", stats?.costPerKmMilli?.let { "${it.toDouble() / 1000.0}" } ?: "—") }
             item { MetricCard("Valid spans", stats?.spans?.count { it.valid }?.toString() ?: "0") }
             item { MetricCard("Best span", stats?.best?.mlPer100km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "—") }
             item { MetricCard("Worst span", stats?.worst?.mlPer100km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "—") }
-            item { ChartCard("Monthly total", stats?.let { "${it.monthBuckets.size} months tracked" } ?: "Add data to see trends") }
+            item {
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Monthly spending", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        if (buckets.isEmpty()) Text("No data in this period", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
+                            buckets.forEach { b ->
+                                val h = (b.cost.minor.toFloat() / maxCost * 100f).coerceAtLeast(4f)
+                                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 2.dp), contentAlignment = Alignment.BottomCenter) {
+                                        Box(Modifier.fillMaxWidth().fillMaxHeight(h / 100f).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)))
+                                    }
+                                    Text(b.month.monthValue.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (expenses.isNotEmpty()) item { ChartCard("Expense records", "${expenses.size} records tracked") }
             if (prices.isNotEmpty()) item { ChartCard("Unit price by label", prices.joinToString("\n") { "${it.label}: ${it.minimum}–${it.maximum} milli" }) }
         }
     }
@@ -772,6 +864,7 @@ private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
             item { OutlinedButton(onClick = { importer.launch(arrayOf("text/csv", "text/plain", "text/comma-separated-values")) }, Modifier.fillMaxWidth()) { Text("Import Drivvo / Fuelio CSV") } }
             preview?.let { p ->
                 item { ChartCard("Import preview", "${p.domain.fuelEntries.size} fuel • ${p.domain.expenseRecords.size} expenses • ${p.report.count { it.level.toString().contains("WARN") }} warnings • ${p.report.count { it.level.toString().contains("SKIP") }} skipped") }
+                if (p.domain.recordTypes.isNotEmpty()) item { ChartCard("Expense types to import", p.domain.recordTypes.joinToString("\n") { "${it.name} → ${categoryLabel(it.category)}" }) }
                 if (p.report.isNotEmpty()) item { ChartCard("Report details", p.report.take(8).joinToString("\n") { "Row ${it.row}: ${it.code}" }) }
                 item { Button(onClick = { vm.applyImport(p); preview = null; message = "Import applied" }, Modifier.fillMaxWidth()) { Text("Apply import") } }
             }
@@ -796,4 +889,18 @@ private fun volumeLabel(u: VolumeUnit) = when (u) {
 private fun energyLabel(u: EnergyUnit) = when (u) {
     EnergyUnit.WATT_HOURS -> "Watt-hours (Wh)"
     EnergyUnit.KILOWATT_HOURS -> "Kilowatt-hours (kWh)"
+}
+
+private fun categoryLabel(c: RecordCategory) = when (c) {
+    RecordCategory.SERVICE -> "Service"
+    RecordCategory.REPAIR -> "Repair"
+    RecordCategory.UPGRADE -> "Upgrade"
+    RecordCategory.OTHER -> "Other"
+}
+
+private fun categoryIcon(c: RecordCategory): ImageVector = when (c) {
+    RecordCategory.SERVICE -> Icons.Outlined.Build
+    RecordCategory.REPAIR -> Icons.Outlined.Handyman
+    RecordCategory.UPGRADE -> Icons.Outlined.AutoAwesome
+    RecordCategory.OTHER -> Icons.Outlined.MoreHoriz
 }
