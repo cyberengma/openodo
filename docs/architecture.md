@@ -130,9 +130,8 @@ no network. Therefore:
 | 09 | reminders-ui | Reminders tab, WorkManager daily check, notifications | 07, 04 |
 | 10 | stats-backup-release | Charts, SAF backup/restore, import UI, fastlane metadata, reproducible release CI, `fdroiddata` YAML draft | 08, 09 |
 
-Briefs exist for 01–05. Briefs for 06–10 are authored in planning once
-`docs/design/` holds the screen specs; the chain stops honestly after 05
-until then.
+Briefs for 01–10 now exist. Slices 06–10 are authored against the approved
+screen specifications and component/state authority in `docs/design/`.
 
 ## ADR log
 
