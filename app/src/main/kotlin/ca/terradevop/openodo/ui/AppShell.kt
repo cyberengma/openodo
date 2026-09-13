@@ -43,6 +43,10 @@ import ca.terradevop.openodo.core.model.FuelKind
 import ca.terradevop.openodo.core.model.ExpenseRecord
 import ca.terradevop.openodo.core.model.RecordCategory
 import ca.terradevop.openodo.core.model.PerformedBy
+import ca.terradevop.openodo.core.model.Reminder
+import ca.terradevop.openodo.core.reminders.DueCalculator
+import ca.terradevop.openodo.core.reminders.ReminderState
+import ca.terradevop.openodo.core.reminders.ReminderStatus
 import ca.terradevop.openodo.core.money.Money
 import ca.terradevop.openodo.core.money.UnitPrice
 import ca.terradevop.openodo.core.units.Metres
@@ -77,7 +81,7 @@ fun OpenOdoApp(viewModel: AppViewModel) {
             Destination.VEHICLES -> VehiclesScreen(state, viewModel, Modifier.padding(padding))
             Destination.DASHBOARD -> DashboardScreen(state, Modifier.padding(padding))
             Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding))
-            Destination.REMINDERS -> PlaceholderScreen("Reminders", "Maintenance reminders will appear here.", Modifier.padding(padding))
+            Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding))
             Destination.SETTINGS -> SettingsScreen(state, viewModel, Modifier.padding(padding))
         }
     }
@@ -132,6 +136,30 @@ private fun DashboardScreen(state: ShellState, modifier: Modifier) { val vehicle
 
 @Composable
 private fun SettingsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) { Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Settings", style = MaterialTheme.typography.headlineSmall); Text("Active vehicle configuration", style = MaterialTheme.typography.titleMedium); state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { Text("${it.distanceUnit.name} • ${it.volumeUnit.name} • ${it.currency}") }; OutlinedButton(onClick = { }) { Text("Manage vehicles") } } }
+
+@Composable
+private fun RemindersScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
+    val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
+    var editing by remember { mutableStateOf(false) }
+    val reminders = if (vehicle == null) emptyList() else viewModel.reminders(vehicle.id).collectAsState(initial = emptyList()).value
+    if (editing && vehicle != null) { ReminderForm(vehicle, { viewModel.saveReminder(it); editing = false }, { editing = false }, modifier); return }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("Reminders", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.weight(1f)); IconButton(onClick = { editing = true }) { Text("+") } }
+        if (reminders.isEmpty()) EmptyCard("No reminders", "Add a maintenance reminder to stay ahead of service.") else if (vehicle != null) LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(reminders, key = { it.id }) { reminder -> ReminderCard(reminder, viewModel, vehicle) } }
+    }
+}
+
+@Composable
+private fun ReminderCard(reminder: Reminder, viewModel: AppViewModel, vehicle: Vehicle) {
+    val status = DueCalculator.evaluate(reminder, vehicle.manualOdometer, LocalDate.now())
+    Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Text("Reminder #${reminder.id}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Text(status.state.name, color = if (status.state == ReminderState.OVERDUE) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium) }; Text("${status.nextDueDate ?: "No date"} • ${status.nextDueOdometer?.value ?: "No odometer"} m", style = MaterialTheme.typography.bodySmall); if (status.staleOdometer) Text("Odometer is stale", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall); Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = { viewModel.saveReminder(reminder.copy(anchorDate = LocalDate.now(), anchorOdometer = vehicle.manualOdometer)) }) { Text("Reset") }; OutlinedButton(onClick = { viewModel.deleteReminder(reminder) }) { Text("Delete") } } } }
+}
+
+@Composable
+private fun ReminderForm(vehicle: Vehicle, onSave: (Reminder) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
+    var months by remember { mutableStateOf("") }; var distance by remember { mutableStateOf("") }; var error by remember { mutableStateOf<String?>(null) }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add reminder", style = MaterialTheme.typography.headlineSmall); OutlinedTextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); OutlinedTextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${vehicle.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val m = months.toIntOrNull(); val d = distance.toLongOrNull(); if ((m == null || m <= 0) && (d == null || d <= 0)) error = "At least one positive interval is required" else onSave(Reminder(vehicleId = vehicle.id, typeId = 0, intervalDistance = d?.let { Metres(it * 1_000) }, intervalMonths = m, anchorDate = null, anchorOdometer = null, active = true)) }) { Text("Save") } } }
+}
 
 @Composable
 private fun RecordsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {

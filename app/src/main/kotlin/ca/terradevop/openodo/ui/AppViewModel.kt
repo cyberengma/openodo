@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import ca.terradevop.openodo.core.model.Vehicle
 import ca.terradevop.openodo.core.model.ExpenseRecord
 import ca.terradevop.openodo.core.model.FuelEntry
+import ca.terradevop.openodo.core.model.Reminder
 import ca.terradevop.openodo.data.ExpenseRecordRepository
 import ca.terradevop.openodo.data.FuelEntryRepository
+import ca.terradevop.openodo.data.ReminderRepository
 import ca.terradevop.openodo.data.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +31,7 @@ class AppViewModel @Inject constructor(
     private val vehicles: VehicleRepository,
     private val fuels: FuelEntryRepository,
     private val expenses: ExpenseRecordRepository,
+    private val reminders: ReminderRepository,
 ) : ViewModel() {
     private val selected = MutableStateFlow<Long?>(null)
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
@@ -53,5 +56,15 @@ class AppViewModel @Inject constructor(
 
     fun saveExpense(record: ExpenseRecord) {
         viewModelScope.launch { expenses.save(record) }
+    }
+
+    fun reminders(vehicleId: Long) = reminders.observeForVehicle(vehicleId)
+
+    fun saveReminder(reminder: Reminder) {
+        viewModelScope.launch { reminders.save(reminder) }
+    }
+
+    fun deleteReminder(reminder: Reminder) {
+        viewModelScope.launch { reminders.delete(reminder) }
     }
 }
