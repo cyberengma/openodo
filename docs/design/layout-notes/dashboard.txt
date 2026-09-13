@@ -1,0 +1,175 @@
+Here's a layout analysis of the mobile app screen, in top-to-bottom order, for Jetpack Compose reproduction:
+
+**1. Top Bar**
+*   **Element:** Row
+    *   **Element:** Car icon + "2022 Corolla Hybrid" + Down arrow icon
+        *   **Placement:** Left
+        *   **Text:** "2022 Corolla Hybrid"
+        *   **Size Hierarchy:** Medium text (smaller than main readings)
+        *   **Color:** Dark Grey (#2C3033)
+        *   **Background:** Light grey pill shape (#E9EDEF)
+    *   **Element:** Search icon
+        *   **Placement:** Right (left of share icon)
+        *   **Color:** Dark Grey (#2C3033)
+    *   **Element:** Share icon
+        *   **Placement:** Right
+        *   **Color:** Dark Grey (#2C3033)
+
+**2. Current Reading Card**
+*   **Element:** Card (rounded corners)
+    *   **Element:** "CURRENT READING"
+        *   **Placement:** Top Left
+        *   **Size Hierarchy:** Small uppercase text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "8 days stale" pill
+        *   **Placement:** Top Right
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Dark Grey (#2C3033)
+        *   **Background:** Light green/grey (#E9EDEF) with clock icon
+    *   **Element:** "48,320"
+        *   **Placement:** Left (large text)
+        *   **Size Hierarchy:** Very Large Bold
+        *   **Color:** Dark Grey (#2C3033)
+    *   **Element:** "COST / KM"
+        *   **Placement:** Right (aligned with "48,320")
+        *   **Size Hierarchy:** Small uppercase text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "Kilometres • Logged 23 Mar"
+        *   **Placement:** Left (below "48,320")
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "$0.18"
+        *   **Placement:** Right (below "COST / KM")
+        *   **Size Hierarchy:** Large Bold
+        *   **Color:** Dark Grey (#2C3033)
+    *   **Element:** Alert box
+        *   **Placement:** Full width bottom of card
+        *   **Background:** Light beige (#FDF4EC) with rounded corners
+        *   **Element:** Exclamation icon
+            *   **Placement:** Left
+            *   **Color:** Orange (#EC9949)
+        *   **Element:** "Odometer not updated recently. Last entry was 8 days ago."
+            *   **Placement:** Right of icon
+            *   **Size Hierarchy:** Small text
+            *   **Color:** Orange (#EC9949)
+
+**3. Action Buttons Row**
+*   **Element:** Row of three square buttons with rounded corners
+    *   **Button 1:** "Add Fuel"
+        *   **Icon:** Fuel pump (dark teal #2C6B6E)
+        *   **Text:** "Add Fuel" (dark grey #2C3033)
+        *   **Background:** White
+    *   **Button 2:** "Add Expense"
+        *   **Icon:** Wrench (light teal #92B1B1)
+        *   **Text:** "Add Expense" (dark grey #2C3033)
+        *   **Background:** White
+    *   **Button 3:** "Add Reminder"
+        *   **Icon:** Bell with plus (light teal #92B1B1)
+        *   **Text:** "Add Reminder" (dark grey #2C3033)
+        *   **Background:** White
+
+**4. Active Reminders Section Header**
+*   **Element:** "Active reminders"
+    *   **Placement:** Left
+    *   **Size Hierarchy:** Medium Bold
+    *   **Color:** Dark Grey (#2C3033)
+*   **Element:** "View all (3)"
+    *   **Placement:** Right
+    *   **Size Hierarchy:** Medium
+    *   **Color:** Blue (#0D6EFD)
+
+**5. Engine Oil & Filter Reminder Card**
+*   **Element:** Card (rounded corners)
+    *   **Element:** Exclamation icon (red #DC3545)
+        *   **Placement:** Top Left
+    *   **Element:** "Engine Oil & Filter"
+        *   **Placement:** Right of icon
+        *   **Size Hierarchy:** Medium Bold
+        *   **Color:** Red (#DC3545)
+    *   **Element:** "Overdue" pill
+        *   **Placement:** Top Right
+        *   **Size Hierarchy:** Small text
+        *   **Color:** White
+        *   **Background:** Red (#DC3545)
+    *   **Element:** "Every 10,000 km or 6 mo"
+        *   **Placement:** Left (below "Engine Oil & Filter")
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "Trigger: Distance"
+        *   **Placement:** Bottom Left
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "320 km past due"
+        *   **Placement:** Bottom Right
+        *   **Size Hierarchy:** Medium Bold
+        *   **Color:** Red (#DC3545)
+
+**6. Tire Rotation Reminder Card**
+*   **Element:** Card (rounded corners)
+    *   **Element:** Warning triangle icon (orange #EC9949)
+        *   **Placement:** Top Left
+    *   **Element:** "Tire Rotation"
+        *   **Placement:** Right of icon
+        *   **Size Hierarchy:** Medium Bold
+        *   **Color:** Dark Grey (#2C3033)
+    *   **Element:** "Due soon" pill
+        *   **Placement:** Top Right
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Orange (#EC9949)
+        *   **Background:** Light orange/beige (#FDF4EC)
+    *   **Element:** "Every 8,000 km"
+        *   **Placement:** Left (below "Tire Rotation")
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** Progress bar
+        *   **Placement:** Full width, below previous text
+        *   **Color:** Orange (#EC9949) for filled part, Light grey for empty part
+    *   **Element:** "Due at 49,000 km"
+        *   **Placement:** Bottom Left
+        *   **Size Hierarchy:** Small text
+        *   **Color:** Medium Grey (#666D71)
+    *   **Element:** "680 km left"
+        *   **Placement:** Bottom Right
+        *   **Size Hierarchy:** Medium Bold
+        *   **Color:** Dark Grey (#2C3033)
+
+**7. Recent Activity Section Header**
+*   **Element:** "Recent activity"
+    *   **Placement:** Left
+    *   **Size Hierarchy:** Medium Bold
+    *   **Color:** Dark Grey (#2C3033)
+*   **Element:** "March 2024"
+    *   **Placement:** Right
+    *   **Size Hierarchy:** Medium
+    *   **Color:** Medium Grey (#666D71)
+
+**8. Shell Station Activity Item**
+*   **Element:** Card/Row
+    *   **Element:** Fuel drop icon (teal #2C6B6E)
+        *   **Placement:** Left
+    *   **Element:** "Shell Station • Full"
+        *   **Placement:** Right of icon
+        *   **Size Hierarchy:** Medium
+        *   **Color:** Dark Grey (#2C3033)
+    *   **Element:** "$62.40"
+        *   **Placement:** Right
+        *   **Size Hierarchy:** Medium Bold
+        *   **Color:** Dark Grey (#2C3033)
+
+**9. Bottom Navigation Bar**
+*   **Element:** Row of five icons and labels
+    *   **Icon/Label 1:** Car icon / "Vehicles"
+        *   **Icon:** Dark Grey (#666D71)
+        *   **Text:** Dark Grey (#666D71)
+    *   **Icon/Label 2:** Dashboard icon / "Dashboard"
+        *   **Icon:** Teal (#2C6B6E)
+        *   **Text:** Teal (#2C6B6E)
+    *   **Icon/Label 3:** Document icon / "Records"
+        *   **Icon:** Dark Grey (#666D71)
+        *   **Text:** Dark Grey (#666D71)
+    *   **Icon/Label 4:** Bell icon / "Reminders"
+        *   **Icon:** Dark Grey (#666D71)
+        *   **Text:** Dark Grey (#666D71)
+    *   **Icon/Label 5:** Gear icon / "Settings"
+        *   **Icon:** Dark Grey (#666D71)
+        *   **Text:** Dark Grey (#666D71)

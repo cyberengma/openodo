@@ -1,0 +1,77 @@
+Here's a layout analysis of the mobile app screen, top-to-bottom:
+
+**Top Bar**
+*   **"OPENODO"**: Top left, small, light gray.
+*   **"Local Log"**: Right of "OPENODO", small, light gray text with a padlock icon on its left, enclosed in a light gray pill-shaped background.
+*   **Search icon**: Top right, medium size, dark gray.
+*   **Menu icon**: Right of search icon, medium size, dark gray.
+*   **"Records"**: Below "OPENODO", large, bold, dark gray, left-aligned.
+
+**Category Filters**
+*   **"All (24)"**: Left, medium text, white, within a teal pill-shaped background.
+*   **"Fuel (18)"**: Right of "All (24)", medium text, dark gray, within a light gray pill-shaped background.
+*   **"Service (3)"**: Right of "Fuel (18)", medium text, dark gray, within a light gray pill-shaped background.
+*   **"Repair (1)"**: Right of "Service (3)", medium text, dark gray, within a light gray pill-shaped background.
+*   **"U"**: Right of "Repair (1)", medium text, dark gray, within a light gray pill-shaped background (partially visible).
+
+**Summary Card**
+*   **"Total vehicle spend to date"**: Left, small text, light gray.
+*   **"$1,465.47"**: Right, medium bold text, dark gray.
+*   **"24 logs"**: Right of money, small text, light gray.
+
+**March 2024 Section**
+*   **"MARCH 2024"**: Left, small, uppercase, dark gray text.
+
+**Fuel Record Card (Shell Service Station)**
+*   **Fuel icon**: Left, small, teal, within a light gray circle.
+*   **"Shell Service Station"**: Right of icon, medium bold text, dark gray, left-aligned.
+*   **"24 Mar 2024 • 48,850 km (+530 km)"**: Below station name, small text, dark gray, left-aligned.
+*   **"$43.17"**: Top right, medium bold text, dark gray.
+*   **"26.50 L @ $1.629"**: Below amount, small text, dark gray, right-aligned.
+*   **"Unleaded 95"**: Bottom left, small text, dark gray, within a light gray pill-shaped background.
+*   **"Full Tank"**: Right of "Unleaded 95", small text, dark gray, within a light gray pill-shaped background.
+*   **"5.00 L/100km"**: Bottom right, small text, dark gray.
+
+**Service Record Card (Engine Oil & Filter Service)**
+*   **Wrench icon**: Left, small, teal, within a light gray circle.
+*   **"Engine Oil & Filter Service"**: Right of icon, medium bold text, dark gray, left-aligned.
+*   **"Shop"**: Right of service name, very small text, teal, within a light green pill-shaped background.
+*   **"18 Mar 2024 • 48,500 km • UltraTune Auto"**: Below service name, small text, dark gray, left-aligned.
+*   **"$189.00"**: Top right, medium bold text, dark gray.
+*   **"Receipt"**: Below amount, small text, light gray, with a receipt icon to its left, right-aligned.
+*   **"Service"**: Bottom left, small text, dark gray, within a light gray pill-shaped background.
+*   **"12 mo Warranty"**: Right of "Service", small text, dark gray, within a light gray pill-shaped background.
+*   **"Reset 1 reminder"**: Bottom right, small text, light gray.
+
+**Purchase Record Card (All-Weather Floor Mats)**
+*   **Sparkle icon**: Left, small, purple, within a light gray circle.
+*   **"All-Weather Floor Mats"**: Right of icon, medium bold text, dark gray, left-aligned.
+*   **"Self"**: Right of item name, very small text, light gray, within a light gray pill-shaped background.
+*   **"10 Mar 2024 • 48,120 km"**: Below item name, small text, dark gray, left-aligned.
+*   **"$120.00"**: Top right, medium bold text, dark gray.
+*   **"Upgrade"**: Below amount, small text, light gray, right-aligned.
+
+**February 2024 Section**
+*   **"FEBRUARY 2024"**: Left, small, uppercase, dark gray text.
+
+**Repair Record Card (Tire Puncture Repair)**
+*   **Hammer icon**: Left, small, reddish-brown, within a light gray circle.
+*   **"Tire Puncture Repair"**: Right of icon, medium bold text, dark gray, left-aligned.
+*   **"Shop"**: Right of repair name, very small text, teal, within a light green pill-shaped background.
+*   **"22 Feb 2024 • 47,200 km • Jax Tyres"**: Below repair name, small text, dark gray, left-aligned.
+*   **"$45.00"**: Top right, medium bold text, dark gray.
+*   **"Repair"**: Below amount, small text, light gray, right-aligned.
+
+**Fuel Record Card (Ampol Woolworths)**
+*   **Fuel icon**: Left, small, teal, within a light gray circle.
+*   **"Ampol Woolworths"**: Right of icon, medium bold text, dark gray, left-aligned.
+*   **"16 Feb 2024 • 46,900 km (+720 km)"**: Below station name, small text, dark gray, left-aligned.
+*   **"$56.80"**: Top right, medium bold text, dark gray.
+*   **"36.00 L @"**: Below amount, small text, dark gray, right-aligned.
+
+**Bottom Navigation Bar**
+*   **"Vehicles"**: Bottom left, small text, light gray, with a car icon above it.
+*   **"Dashboard"**: Right of "Vehicles", small text, light gray, with a dashboard icon above it.
+*   **"Records"**: Center (selected), small text, teal, with a highlighted records icon above it.
+*   **"Reminders"**: Right of "Records", small text, light gray, with a bell icon above it.
+*   **"Settings"**: Bottom right, small text, light gray, with a gear icon above it.

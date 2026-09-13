@@ -1,0 +1,54 @@
+- **Header**
+    - Text: "OPENODO", left, small, color: #4B5563
+    - Text: "Settings", left, large, bold, color: #1F2937
+    - Icon: Gear icon, right, medium, color: #4B5563
+- **Card: Active Vehicle Configuration** (light gray background, rounded corners)
+    - Text: "ACTIVE VEHICLE CONFIGURATION", left, medium, bold, color: #4B5563
+    - Chip: "Vehicle-Scoped", right, small, rounded, color: #E5E7EB (background), #4B5563 (text)
+    - **Nested Card: Vehicle Info** (white background, rounded corners)
+        - Icon: Car icon, left, medium, color: #10B981
+        - Text: "2022 Corolla Hybrid", left, medium, bold, color: #1F2937
+        - Chip: "Active", right, small, rounded, color: #E0F2F1 (background), #004D40 (text)
+        - **Row of 2 Cards**
+            - **Card: Distance Unit** (light gray background, rounded corners)
+                - Text: "Distance", left, small, color: #4B5563
+                - Text: "Kilometres (km)", left, medium, bold, color: #1F2937
+            - **Card: Volume Unit** (light gray background, rounded corners)
+                - Text: "Volume", left, small, color: #4B5563
+                - Text: "Litres (L)", left, medium, bold, color: #1F2937
+        - **Row of 2 Cards**
+            - **Card: Energy Unit** (light gray background, rounded corners)
+                - Text: "Energy", left, small, color: #4B5563
+                - Text: "Kilowatt-hours (kWh)", left, medium, bold, color: #1F2937
+            - **Card: Currency Unit** (light gray background, rounded corners)
+                - Text: "Currency", left, small, color: #4B5563
+                - Text: "AUD ($)", left, medium, bold, color: #1F2937
+        - Text: "Units, fuel metrics, and currency are defined per vehicle. Switching active vehicles automatically re-formats all logs without altering canonical storage.", left, small, color: #6B7280
+        - Button: "Configure Units for This Vehicle", left, medium, bold, color: #1F2937
+        - Icon: Right arrow, right, medium, color: #1F2937
+- **Card: Vehicle Management** (white background, rounded corners)
+    - Text: "VEHICLE MANAGEMENT", left, medium, bold, color: #4B5563
+    - Icon: Car icon, left, medium, color: #4B5563
+    - Text: "Switch & Manage Vehicles", left, medium, bold, color: #1F2937
+    - Text: "2 active • 1 archived", left, small, color: #6B7280
+    - Icon: Right arrow, right, medium, color: #6B7280
+- **Card: Backup & Migration** (white background, rounded corners)
+    - Text: "BACKUP & MIGRATION", left, medium, bold, color: #4B5563
+    - Icon: Database icon, left, medium, color: #4B5563
+    - Text: "Portability Hub", left, medium, bold, color: #1F2937
+    - Text: "JSON snapshot, CSV export, Drivvo & Fuelio import", left, small, color: #6B7280
+    - Icon: Right arrow, right, medium, color: #6B7280
+- **Card: App Preferences** (white background, rounded corners)
+    - Text: "APP PREFERENCES", left, medium, bold, color: #4B5563
+    - (Partial content: "Old Odometer Alert")
+- **Bottom Navigation Bar** (light gray background)
+    - Icon: Car, center, medium, color: #6B7280
+    - Text: "Vehicles", center, small, color: #6B7280
+    - Icon: Dashboard, center, medium, color: #6B7280
+    - Text: "Dashboard", center, small, color: #6B7280
+    - Icon: Records, center, medium, color: #6B7280
+    - Text: "Records", center, small, color: #6B7280
+    - Icon: Bell, center, medium, color: #6B7280
+    - Text: "Reminders", center, small, color: #6B7280
+    - Icon: Gear, center, medium, color: #10B981
+    - Text: "Settings", center, small, color: #10B981

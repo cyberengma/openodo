@@ -1,0 +1,53 @@
+## Layout Notes: Portability & Data Screen
+
+**1. Top App Bar**
+
+*   **Left:** Back arrow icon. Color: #000000.
+*   **Center:** "Portability & Data". Text size: Large (likely 20sp/h6). Color: #000000.
+*   **Right:** "Offline" label in a rounded pill shape. Text size: Small. Text color: #30656D. Background color: #E0EBEB.
+
+**2. OpenOdo JSON Backup Section (Card)**
+
+*   **Icon:** Square with rounded corners, dark teal background (#30656D), white folder icon with a plus sign. Left-aligned.
+*   **Title:** "OpenOdo JSON Backup". Text size: Medium-large (likely 18sp/h5). Color: #000000. Right of icon.
+*   **Description:** "Lossless full database snapshot with vehicle metadata, canonical units, receipts references, and reminders." Text size: Small. Color: #6C6C6C. Below title.
+*   **Button 1:** "Create Backup". Left-aligned. Dark teal background (#30656D), white text. Icon: Download arrow (white).
+*   **Button 2:** "Restore JSON". Right of Button 1. White background, light gray border, dark gray text. Icon: Upload arrow (dark gray).
+
+**3. CSV Spreadsheet Export Section (Card)**
+
+*   **Icon:** Square with rounded corners, light gray background (#E0EBEB), dark gray "CSV" icon. Left-aligned.
+*   **Title:** "CSV Spreadsheet Export". Text size: Medium-large (likely 18sp/h5). Color: #000000. Right of icon.
+*   **Description:** "Standard comma-separated files readable in Excel, LibreOffice, or Google Sheets." Text size: Small. Color: #6C6C6C. Below title.
+*   **Button 1:** "Export Fuel Logs (.csv)". Full width. Light gray background (#F5F5F5), dark gray text. Right-aligned icon: Share/Export.
+*   **Button 2:** "Export Expenses & Services (.csv)". Below Button 1. Full width. Light gray background (#F5F5F5), dark gray text. Right-aligned icon: Share/Export.
+
+**4. Migrate from Other Apps Section (Card)**
+
+*   **Title:** "Migrate from Other Apps". Text size: Medium-large (likely 18sp/h5). Color: #000000. Left-aligned.
+*   **Description:** "Import historical logs directly from Drivvo or Fuelio backups." Text size: Small. Color: #6C6C6C. Below title.
+*   **Card 1 (Drivvo):**
+    *   **Label:** "Drivvo". Top-left, pill-shaped, light gray background (#E0EBEB), dark gray text.
+    *   **Title:** "Import Drivvo CSV". Below label. Text size: Medium. Color: #000000.
+    *   **Subtitle:** "Full ledger parsing". Below title. Text size: Small. Color: #6C6C6C.
+*   **Card 2 (Fuelio):**
+    *   **Label:** "Fuelio". Top-left, pill-shaped, light gray background (#E0EBEB), dark gray text.
+    *   **Title:** "Import Fuelio CSV". Below label. Text size: Medium. Color: #000000.
+    *   **Subtitle:** "Sync format & stats". Below title. Text size: Small. Color: #6C6C6C.
+
+**5. Last Import Summary Section (Card)**
+
+*   **Title:** "Last Import Summary". Text size: Medium-large (likely 18sp/h5). Color: #000000. Left-aligned.
+*   **Filename:** "drivvo_export_2024.csv". Text size: Small. Color: #6C6C6C. Right-aligned, on the same line as the title.
+*   **Summary Box 1 (Imported):**
+    *   **Number:** "42". Large text. Color: #30656D.
+    *   **Label:** "Imported". Small text. Color: #30656D.
+    *   Background color: #E0EBEB (light green/teal).
+*   **Summary Box 2 (Warnings):**
+    *   **Number:** "2". Large text. Color: #B8813C.
+    *   **Label:** "Warnings". Small text. Color: #B8813C.
+    *   Background color: #F8EED9 (light orange).
+*   **Summary Box 3 (Skipped):**
+    *   **Number:** "1". Large text. Color: #C25B5B.
+    *   **Label:** "Skipped". Small text. Color: #C25B5B.
+    *   Background color: #F8E2E2 (light red).

@@ -1,0 +1,226 @@
+Here's a layout analysis of the provided mobile app screen:
+
+**Screen Title Bar**
+*   **OPENODO**
+    *   Placement: Top-left
+    *   Size Hierarchy: Smallest text in this section
+    *   Color: #616161 (dark gray)
+*   **Analytics (button/chip)**
+    *   Placement: Right of "OPENODO", slightly below.
+    *   Text: "Analytics"
+    *   Size Hierarchy: Smallest text, similar to "OPENODO"
+    *   Color: #616161 (dark gray) on a light gray background
+*   **Statistics**
+    *   Placement: Below "OPENODO", left-aligned.
+    *   Size Hierarchy: Largest text in this section, bold.
+    *   Color: #212121 (very dark gray)
+*   **Share Icon**
+    *   Placement: Top-right
+    *   Size Hierarchy: Icon, similar to text size of "OPENODO"
+    *   Color: #616161 (dark gray)
+
+**Date Range Selector (Horizontal buttons)**
+*   **3M**
+    *   Placement: Left-most button
+    *   Size Hierarchy: Medium text
+    *   Color: #616161 (dark gray) on a light gray background
+*   **6 Months**
+    *   Placement: Second from left, currently selected.
+    *   Size Hierarchy: Medium text
+    *   Color: #212121 (very dark gray) on a white background, with dark gray border/shadow
+*   **1 Year**
+    *   Placement: Third from left
+    *   Size Hierarchy: Medium text
+    *   Color: #616161 (dark gray) on a light gray background
+*   **Lifetime**
+    *   Placement: Right-most button
+    *   Size Hierarchy: Medium text
+    *   Color: #616161 (dark gray) on a light gray background
+
+**Fuel Economy Card**
+*   **Fuel Economy**
+    *   Placement: Top-left of card
+    *   Size Hierarchy: Large text
+    *   Color: #212121 (very dark gray)
+*   **14 Valid Spans (button/chip)**
+    *   Placement: Top-right of card
+    *   Size Hierarchy: Smallest text in this card
+    *   Color: #212121 (very dark gray) on a light green background, rounded corners
+
+*   **L/100KM (Sub-card 1, top-left)**
+    *   **L / 100KM**
+        *   Placement: Top-left within sub-card
+        *   Size Hierarchy: Medium text
+        *   Color: #616161 (dark gray)
+    *   **4.85**
+        *   Placement: Below "L / 100KM", left-aligned
+        *   Size Hierarchy: Largest text in sub-card
+        *   Color: #00796B (teal)
+    *   **↓ 0.2 vs last period**
+        *   Placement: Below "4.85", left-aligned
+        *   Size Hierarchy: Smallest text in sub-card
+        *   Color: #4CAF50 (green)
+
+*   **KM / LITRE (Sub-card 2, top-right)**
+    *   **KM / LITRE**
+        *   Placement: Top-left within sub-card
+        *   Size Hierarchy: Medium text
+        *   Color: #616161 (dark gray)
+    *   **20.62**
+        *   Placement: Below "KM / LITRE", left-aligned
+        *   Size Hierarchy: Largest text in sub-card
+        *   Color: #212121 (very dark gray)
+    *   **Metric distance**
+        *   Placement: Below "20.62", left-aligned
+        *   Size Hierarchy: Smallest text in sub-card
+        *   Color: #616161 (dark gray)
+
+*   **US MPG (Sub-card 3, bottom-left)**
+    *   **US MPG**
+        *   Placement: Top-left within sub-card
+        *   Size Hierarchy: Medium text
+        *   Color: #616161 (dark gray)
+    *   **48.50**
+        *   Placement: Below "US MPG", left-aligned
+        *   Size Hierarchy: Largest text in sub-card
+        *   Color: #212121 (very dark gray)
+    *   **Miles / US gal**
+        *   Placement: Below "48.50", left-aligned
+        *   Size Hierarchy: Smallest text in sub-card
+        *   Color: #616161 (dark gray)
+
+*   **UK MPG (IMPERIAL) (Sub-card 4, bottom-right)**
+    *   **UK MPG (IMPERIAL)**
+        *   Placement: Top-left within sub-card
+        *   Size Hierarchy: Medium text
+        *   Color: #616161 (dark gray)
+    *   **58.24**
+        *   Placement: Below "UK MPG (IMPERIAL)", left-aligned
+        *   Size Hierarchy: Largest text in sub-card
+        *   Color: #212121 (very dark gray)
+    *   **Miles / Imp gal**
+        *   Placement: Below "58.24", left-aligned
+        *   Size Hierarchy: Smallest text in sub-card
+        *   Color: #616161 (dark gray)
+
+*   **Best/Worst Span (Dashed border box)**
+    *   **Best Span:**
+        *   Placement: Left
+        *   Size Hierarchy: Small text
+        *   Color: #616161 (dark gray)
+    *   **4.62 L/100km (Highway)**
+        *   Placement: Left, below "Best Span:"
+        *   Size Hierarchy: Small text
+        *   Color: #4CAF50 (green)
+    *   **Worst Span:**
+        *   Placement: Right
+        *   Size Hierarchy: Small text
+        *   Color: #616161 (dark gray)
+    *   **5.40 L/100km (City traffic)**
+        *   Placement: Right, below "Worst Span:"
+        *   Size Hierarchy: Small text
+        *   Color: #D32F2F (red)
+
+*   **Disclaimer Text**
+    *   Placement: Left-aligned, below dashed box
+    *   Text: "* Partial fills & missed fills excluded from calculation spans per standard methodology."
+    *   Size Hierarchy: Smallest text on screen, italic
+    *   Color: #616161 (dark gray)
+
+**Monthly Spending Card**
+*   **Monthly Spending**
+    *   Placement: Top-left of card
+    *   Size Hierarchy: Large text
+    *   Color: #212121 (very dark gray)
+*   **Total $1,465.47**
+    *   Placement: Top-right of card
+    *   Size Hierarchy: Medium text
+    *   Color: #212121 (very dark gray)
+
+*   **Mar (Row 1)**
+    *   **Mar**
+        *   Placement: Left
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+    *   **Progress Bar**
+        *   Colors (left to right): #00796B (teal), #673AB7 (deep purple)
+    *   **$294.57**
+        *   Placement: Right
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+
+*   **Feb (Row 2)**
+    *   **Feb**
+        *   Placement: Left
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+    *   **Progress Bar**
+        *   Colors (left to right): #00796B (teal), #D32F2F (red)
+    *   **$185.70**
+        *   Placement: Right
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+
+*   **Jan (Row 3)**
+    *   **Jan**
+        *   Placement: Left
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+    *   **Progress Bar**
+        *   Color: #00796B (teal) (single segment)
+    *   **$210.20**
+        *   Placement: Right
+        *   Size Hierarchy: Medium text
+        *   Color: #212121 (very dark gray)
+
+*   **Legend (Dots and Text)**
+    *   **Fuel (dot)**
+        *   Color: #00796B (teal)
+    *   **Fuel (text)**
+        *   Placement: Right of dot
+        *   Size Hierarchy: Small text
+        *   Color: #212121 (very dark gray)
+    *   **Service (dot)**
+        *   Color: #673AB7 (deep purple)
+    *   **Service (text)**
+        *   Placement: Right of dot
+        *   Size Hierarchy: Small text
+        *   Color: #212121 (very dark gray)
+    *   **Repair (dot)**
+        *   Color: #D32F2F (red)
+    *   **Repair (text)**
+        *   Placement: Right of dot
+        *   Size Hierarchy: Small text
+        *   Color: #212121 (very dark gray)
+
+**Bottom Navigation Bar**
+*   **Vehicles**
+    *   Icon: Car
+    *   Text: "Vehicles"
+    *   Placement: Left-most
+    *   Size Hierarchy: Small text
+    *   Color: #616161 (dark gray) for icon and text
+*   **Dashboard**
+    *   Icon: Dashboard
+    *   Text: "Dashboard"
+    *   Placement: Second from left
+    *   Size Hierarchy: Small text
+    *   Color: #616161 (dark gray) for icon and text
+*   **Records**
+    *   Icon: Document/Records
+    *   Text: "Records"
+    *   Placement: Center
+    *   Size Hierarchy: Small text
+    *   Color: #616161 (dark gray) for icon and text
+*   **Reminders**
+    *   Icon: Bell/Reminder
+    *   Text: "Reminders"
+    *   Placement: Second from right
+    *   Size Hierarchy: Small text
+    *   Color: #616161 (dark gray) for icon and text
+*   **Settings**
+    *   Icon: Gear/Settings
+    *   Text: "Settings"
+    *   Placement: Right-most, currently selected.
+    *   Size Hierarchy: Small text
+    *   Color: #00796B (teal) for icon and text

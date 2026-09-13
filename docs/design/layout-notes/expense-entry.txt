@@ -1,0 +1,42 @@
+Here's the layout analysis of the mobile app screen, top-to-bottom:
+
+**Top Bar:**
+*   `X` icon: Left, Small, #000000 (implied, not explicit in image), IconButton.
+*   `Add Expense`: Center (relative to screen, left of "Save"), Medium, #000000 (implied), Text.
+*   `Save`: Right, Small, #FFFFFF on #376F6D, FilledButton.
+
+**Category Section (Rounded Card):**
+*   `CATEGORY`: Left, Small, #5F5F5F, Text.
+*   Horizontal Row of Buttons:
+    *   `Service`: Left, Medium, #376F6D (text/icon) on #EAF0EF (background), OutlinedButton. Icon: Wrench.
+    *   `Repair`: Left, Medium, #000000 (text/icon) on #F8F8F8 (background), OutlinedButton. Icon: Hammer.
+    *   `Upgrade`: Left, Medium, #000000 (text/icon) on #F8F8F8 (background), OutlinedButton. Icon: Sparkles.
+    *   `Other`: Left, Medium, #000000 (text/icon) on #F8F8F8 (background), OutlinedButton. Icon: Document.
+
+**Details Section (Rounded Card):**
+*   `DATE`: Left, Small, #5F5F5F, Text.
+*   `TIME`: Right, Small, #5F5F5F, Text.
+*   Horizontal Row of Input Fields:
+    *   `03/24/2024`: Left, Medium, #000000 on #F0F0F0, OutlinedTextField. Icon: Calendar.
+    *   `10:30 AM`: Right, Medium, #000000 on #F0F0F0, OutlinedTextField. Icon: Clock.
+*   `ODOMETER READING`: Left, Small, #5F5F5F, Text.
+*   `Previous: 48,850 km`: Right, Small, #5F5F5F, Text.
+*   Input Field with unit:
+    *   `48850`: Left, Large, #000000 on #F0F0F0, OutlinedTextField.
+    *   `km`: Right, Small, #5F5F5F, Text (within same input field visually).
+*   `TITLE *`: Left, Small, #5F5F5F, Text. Red asterisk for required field.
+*   `Engine Oil & Filter`: Left, Medium, #000000 on #F0F0F0, OutlinedTextField.
+*   `TOTAL COST *`: Left, Small, #5F5F5F, Text. Red asterisk for required field.
+*   `$ 189`: Left, Medium, #000000 on #F0F0F0, OutlinedTextField. Dollar sign is a prefix.
+
+**Performed By Section (Rounded Card):**
+*   `PERFORMED BY`: Left, Small, #5F5F5F, Text.
+*   Toggle Button Group (`Self` / `Shop`): Right.
+    *   `Self`: Left part of toggle, Medium, #000000 on #E0E0E0, Button.
+    *   `Shop`: Right part of toggle, Medium, #FFFFFF on #5F5F5F, Button.
+*   `SHOP / MECHANIC NAME`: Left, Small, #5F5F5F, Text.
+*   `UltraTune Auto Repair`: Left, Medium, #000000 on #F0F0F0, OutlinedTextField.
+*   `Warranty Included`: Left, Medium, #000000, Text.
+*   Checkbox: Right, Medium, Blue (#4285F4) checked.
+*   `Warranty details / duration`: Left, Small, #5F5F5F, Text.
+*   `12 months / 20,000 km`: Left, Medium, #000000 on #F0F0F0, OutlinedTextField.

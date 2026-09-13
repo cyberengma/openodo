@@ -1,0 +1,63 @@
+Here's the layout analysis of the mobile app screen, top-to-bottom:
+
+**Top Bar**
+*   **OPENODO** (Text): Left, Small, Black
+*   **On-Device** (Chip): Right of OPENODO, Small, Light Grey background, Dark Grey text, Bell icon (Dark Grey)
+*   **Reminders** (Text): Left, Large, Black, Bold
+*   **+** (Icon): Right, Medium, Black
+*   **Filter Icon** (Icon): Right, Medium, Black
+
+**Category Filters** (Horizontal Scrollable Row)
+*   **All (5)** (Button): Left, Medium, Dark Teal background, White text, Rounded corners
+*   **Overdue (1)** (Button): Right of "All (5)", Medium, White background, Grey text, Rounded corners
+*   **Due Soon (1)** (Button): Right of "Overdue (1)", Medium, White background, Grey text, Rounded corners
+*   **OK (2)** (Button): Right of "Due Soon (1)", Medium, White background, Grey text, Rounded corners
+*   **Ignored (0)** (Button - Partially visible): Right of "OK (2)", Medium, White background, Grey text, Rounded corners
+
+**Information Card** (Rounded Rectangle)
+*   **Info Icon** (Icon): Left, Small, Dark Teal
+*   **Dual interval triggers trigger on whichever comes first (distance or calendar date). Auto-resets upon logging a matching Service expense.** (Text): Right of icon, Medium, Grey, "whichever comes first" is Bold
+
+**Engine Oil & Filter Card** (Rounded Rectangle with Pink Border)
+*   **Exclamation Icon** (Icon): Left, Medium, Red
+*   **Engine Oil & Filter** (Text): Right of icon, Medium, Red, Bold
+*   **Overdue** (Chip): Right, Small, Light Pink background, Red text, Rounded corners
+*   **Interval: 10,000 km or 6 months** (Text): Left, Small, Grey
+*   **Trigger axis:** (Text): Left, Small, Grey
+*   **Distance exceeded** (Text): Right, Small, Red
+*   **Target due odometer:** (Text): Left, Small, Grey
+*   **48,500 km** (Text): Right, Small, Red, Bold
+*   **Current status:** (Text): Left, Small, Grey
+*   **350 km past due** (Text): Right, Small, Red, Bold
+*   **Manual Reset** (Button): Left, Medium, Light Grey background, Dark Grey text, Refresh icon (Dark Grey)
+*   **Edit Icon** (Icon): Right, Medium, Dark Grey
+*   **Power Icon** (Icon): Right, Medium, Dark Grey
+
+**Tire Rotation Card** (Rounded Rectangle)
+*   **Swap Arrows Icon** (Icon): Left, Medium, Light Orange
+*   **Tire Rotation** (Text): Right of icon, Medium, Black, Bold
+*   **Due Soon** (Chip): Right, Small, Light Orange background, Orange text, Rounded corners
+*   **Interval: Every 8,000 km** (Text): Left, Small, Grey
+*   **Progress Bar** (Bar): Center, Gold
+*   **Due at 49,000 km** (Text): Left, Small, Grey
+*   **150 km remaining (91%)** (Text): Right, Small, Black
+*   **Manual Reset** (Button): Left, Medium, Light Grey background, Dark Grey text, Refresh icon (Dark Grey)
+*   **Edit Icon** (Icon): Right, Medium, Dark Grey
+*   **Power Icon** (Icon): Right, Medium, Dark Grey
+
+**Brake Fluid Flush Card** (Rounded Rectangle)
+*   **Checkmark Icon** (Icon): Left, Medium, Dark Green
+*   **Brake Fluid Flush** (Text): Right of icon, Medium, Black, Bold
+*   **OK** (Chip): Right, Small, Light Green background, Dark Green text, Rounded corners
+*   **Interval: Every 24 months** (Text): Left, Small, Grey
+*   **Next due date:** (Text): Left, Small, Grey
+*   **15 Nov 2024** (Text): Right, Small, Black, Bold
+*   **Time remaining:** (Text): Left, Small, Grey
+*   **206 days left** (Text): Right, Small, Black, Bold
+
+**Bottom Navigation Bar**
+*   **Vehicles** (Tab): Center, Icon (Car, Grey), Text (Vehicles, Grey)
+*   **Dashboard** (Tab): Center, Icon (Line Graph, Grey), Text (Dashboard, Grey)
+*   **Records** (Tab): Center, Icon (Document, Grey), Text (Records, Grey)
+*   **Reminders** (Tab): Center, Icon (Bell, Dark Teal), Text (Reminders, Dark Teal)
+*   **Settings** (Tab): Center, Icon (Gear, Grey), Text (Settings, Grey)

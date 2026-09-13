@@ -1,0 +1,62 @@
+Here's an analysis of the mobile app screen, providing layout notes in top-to-bottom order:
+
+**Top Bar/Header**
+*   **"OPENODO"**: Text, Left aligned, Small size, Dark gray (`#404040`).
+*   **Gear Icon**: Icon, Right of "OPENODO", Small size, Dark gray (`#404040`).
+*   **"Per-Vehicle Units"**: Text label in a light green chip with rounded corners, Right of gear icon, Small size, Light green chip background (`#E6F0EE`), Text color: Dark green (`#3F787A`).
+*   **"Vehicles"**: Text, Left aligned, Large size, Black (`#000000`).
+*   **Plus Icon**: Icon, Right aligned, Large size, Dark gray (`#404040`).
+
+**Section: MY VEHICLES**
+*   **"MY VEHICLES (2)"**: Text, Left aligned, Small size, Dark gray (`#5F6368`).
+*   **"Tap to switch active"**: Text, Right aligned, Small size, Dark gray (`#5F6368`).
+
+**Vehicle Card 1 (Active)**
+*   **Container**: Rounded rectangle card, Light blue border (`#8FD1D4`), Light gray background (`#F8F8F8`).
+    *   **Car Icon**: Left, Medium size, Dark green (`#3F787A`) inside a light blue circle (`#D4EDEE`).
+    *   **"2022 Corolla Hybrid"**: Text, Left of "Active" chip, Medium-large size, Black (`#000000`).
+    *   **"Active"**: Text label in a light green chip with rounded corners, Right of vehicle name, Small size, Light green chip background (`#E6F0EE`), Text color: Dark green (`#3F787A`).
+    *   **Pencil Icon**: Right aligned, Small size, Dark gray (`#5F6368`).
+    *   **"Toyota Corolla • 48,850 km"**: Text, Below vehicle name, Small size, Gray (`#5F6368`).
+    *   **"Vehicle Display Configuration"**: Text, Above ID, Small size, Dark gray (`#404040`).
+    *   **"ID: veh_01"**: Text, Right aligned, Below vehicle details, Small size, Light gray (`#808080`).
+    *   **"Distance: km"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Volume: Litres (L)"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Energy: kWh"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Currency: $ AUD"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+
+**Vehicle Card 2**
+*   **Container**: Rounded rectangle card, Light gray background (`#F8F8F8`).
+    *   **Car Icon**: Left, Medium size, Dark gray (`#5F6368`) inside a light gray circle (`#E8E8E8`).
+    *   **"1999 Miata MX-5"**: Text, Left of "Make Active" button, Medium-large size, Black (`#000000`).
+    *   **"Make Active"**: Text label in a light gray button with rounded corners, Right of vehicle name, Small size, Light gray button background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **Pencil Icon**: Right aligned, Small size, Dark gray (`#5F6368`).
+    *   **"Mazda Miata • 112,400 mi"**: Text, Below vehicle name, Small size, Gray (`#5F6368`).
+    *   **"Vehicle Display Configuration"**: Text, Above ID, Small size, Dark gray (`#404040`).
+    *   **"ID: veh_02"**: Text, Right aligned, Below vehicle details, Small size, Light gray (`#808080`).
+    *   **"Distance: Miles (mi)"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Volume: US Gallons (gal)"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Energy: kWh"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Currency: $ USD"**: Text label in a light gray chip, Small size, Light gray chip background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+
+**Section: CONFIGURATION (Add / Edit Vehicle)**
+*   **Container**: Rounded rectangle card, Light gray background (`#F8F8F8`).
+    *   **"CONFIGURATION"**: Text, Left aligned, Small size, Dark gray (`#5F6368`).
+    *   **"Vehicle-Scoped"**: Text label in a light green chip with rounded corners, Right aligned, Small size, Light green chip background (`#E6F0EE`), Text color: Dark green (`#3F787A`).
+    *   **"Add / Edit Vehicle"**: Text, Left aligned, Medium-large size, Black (`#000000`).
+    *   **"Vehicle Nickname *"**: Text, Left aligned, Small size, Dark gray (`#404040`).
+    *   **Input Field: "2022 Corolla Hybrid"**: Text input with rounded corners, Light gray background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Make"**: Text, Left aligned, Small size, Dark gray (`#404040`).
+    *   **"Model"**: Text, Right of "Make", Small size, Dark gray (`#404040`).
+    *   **Input Field: "Toyota"**: Text input with rounded corners, Light gray background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **Input Field: "Corolla"**: Text input with rounded corners, Light gray background (`#E8E8E8`), Text color: Dark gray (`#404040`).
+    *   **"Year"**: Text, Left aligned, Small size, Dark gray (`#404040`). (Input field below not visible)
+    *   **"Initial Odometer"**: Text, Right of "Year", Small size, Dark gray (`#404040`). (Input field below not visible)
+
+**Bottom Navigation Bar**
+*   **Container**: White background (`#FFFFFF`).
+    *   **"Vehicles"**: Car icon (filled, dark green `#3F787A`) above text label "Vehicles" (dark green `#3F787A`). Center aligned within its column.
+    *   **"Dashboard"**: Line chart icon (gray `#808080`) above text label "Dashboard" (gray `#808080`). Center aligned within its column.
+    *   **"Records"**: Document icon (gray `#808080`) above text label "Records" (gray `#808080`). Center aligned within its column.
+    *   **"Reminders"**: Bell icon (gray `#808080`) above text label "Reminders" (gray `#808080`). Center aligned within its column.
+    *   **"Settings"**: Gear icon (gray `#808080`) above text label "Settings" (gray `#808080`). Center aligned within its column.

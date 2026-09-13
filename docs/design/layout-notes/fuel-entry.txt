@@ -1,0 +1,78 @@
+Here's the layout analysis of the mobile app screen:
+
+**1. Top Bar**
+*   **Icon:** 'X' (Close), left, icon size, #1F1F1F
+*   **Text:** 'Add Fuel', center, large (heading), #1F1F1F
+*   **Button:** 'Save', right, medium, #336B69 (background), #FFFFFF (text)
+
+**2. Fuel Type Selector**
+*   **Segmented Button (Left Selected):**
+    *   **Icon:** Fuel drop, left of text, small, #1F1F1F
+    *   **Text:** 'Liquid Fuel', center, medium, #1F1F1F
+    *   **Background:** #FFFFFF, rounded rectangle
+*   **Segmented Button (Right Unselected):**
+    *   **Icon:** Lightning bolt, left of text, small, #808080
+    *   **Text:** 'Electric Charging', center, medium, #808080
+    *   **Background:** #F0F0F0, rounded rectangle
+
+**3. Date & Odometer Section (Card 1)**
+*   **Row 1 (Date & Time)**
+    *   **Label:** 'DATE', left, small, #808080
+    *   **Label:** 'TIME', right, small, #808080
+    *   **Input Field (Date):**
+        *   **Text:** '03/24/2024', left, medium, #1F1F1F
+        *   **Icon:** Calendar, right, small, #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle
+    *   **Input Field (Time):**
+        *   **Text:** '08:45 AM', left, medium, #1F1F1F
+        *   **Icon:** Clock, right, small, #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle
+*   **Row 2 (Odometer Reading)**
+    *   **Label:** 'ODOMETER READING', left, small, #808080
+    *   **Text:** 'Previous: 48,320 km', right, small, #808080
+    *   **Input Field (Odometer):**
+        *   **Text:** '48850', left, large (input), #1F1F1F
+        *   **Text:** 'km', right, medium, #808080
+        *   **Background:** #F0F0F0, rounded rectangle
+    *   **Info Text:** ' +530 km since last fill-up', left, small, #336B69 (icon), #808080 (text)
+
+**4. Volume & Cost Section (Card 2)**
+*   **Row 1 (Volume & Unit Price)**
+    *   **Label:** 'VOLUME', left, small, #808080
+    *   **Label:** 'UNIT PRICE', right, small, #808080
+    *   **Input Field (Volume):**
+        *   **Text:** '26.5', left, large (input), #1F1F1F
+        *   **Text:** 'L', right, medium, #808080
+        *   **Background:** #F0F0F0, rounded rectangle
+    *   **Input Field (Unit Price):**
+        *   **Text:** '$', left, medium, #1F1F1F
+        *   **Text:** '1.629', left, large (input), #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle
+*   **Row 2 (Total Cost)**
+    *   **Label:** 'TOTAL COST', left, small, #808080
+    *   **Input Field (Total Cost):**
+        *   **Text:** '$', left, medium, #1F1F1F
+        *   **Text:** '43.17', left, large (input), #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle
+    *   **Hint Text:** 'Auto-calculated from volume × unit price.', left, small, #808080
+*   **Row 3 (Checkboxes)**
+    *   **Checkbox (Checked):**
+        *   **Icon:** Checked square, left, small, #336B69
+        *   **Text:** 'Full Tank', right, medium, #1F1F1F
+        *   **Background:** #FFFFFF, rounded rectangle (container)
+    *   **Checkbox (Unchecked):**
+        *   **Icon:** Unchecked square, left, small, #1F1F1F
+        *   **Text:** 'Missed Fill', right, medium, #1F1F1F
+        *   **Background:** #FFFFFF, rounded rectangle (container)
+
+**5. Fuel Station & Grade Section (Card 3)**
+*   **Row 1 (Fuel Station)**
+    *   **Label:** 'FUEL STATION', left, small, #808080
+    *   **Input Field:**
+        *   **Text:** 'Caltex / Ampol Woolworths', left, medium, #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle
+*   **Row 2 (Fuel Grade)**
+    *   **Label:** 'FUEL GRADE / LABEL', left, small, #808080
+    *   **Input Field:**
+        *   **Text:** 'Unleaded 95', left, medium, #1F1F1F
+        *   **Background:** #F0F0F0, rounded rectangle

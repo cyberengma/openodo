@@ -34,6 +34,7 @@ import ca.terradevop.openodo.core.money.Money
 import ca.terradevop.openodo.core.portability.ImportResult
 import ca.terradevop.openodo.core.reminders.DueCalculator
 import ca.terradevop.openodo.core.reminders.ReminderState
+import ca.terradevop.openodo.core.reminders.ReminderStatus
 import ca.terradevop.openodo.core.units.*
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -341,7 +342,7 @@ private fun DashboardScreen(
             item { QuickActions(onFuel, onExpense, onReminder) }
             item { Text("Active reminders", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             if (reminders.isEmpty()) item { EmptyState("No reminders yet", "Add a service interval to stay ahead.", "Add reminder", onReminder) }
-            items(reminders.take(3), key = { it.id }) { ReminderCard(it, v, viewModel, {}) }
+            items(reminders.take(3), key = { it.id }) { ReminderCard(it, DueCalculator.evaluate(it, v.manualOdometer, LocalDate.now()), "Service", v, viewModel, {}) }
             item { Text("Recent fuel", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             if (fuels.isEmpty()) item { EmptyState("No fuel history", "Log your first fill-up or charging session.", "Add fuel", onFuel) }
             items(fuels.take(3), key = { it.id }) { FuelCard(it, {}, {}) }
@@ -430,7 +431,10 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
 
 @Composable
 private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
-    var amount by remember(initial) { mutableStateOf(initial?.volume?.value?.div(1000)?.toString() ?: "") }
+    var kind by remember(initial) { mutableStateOf(initial?.kind ?: FuelKind.LIQUID) }
+    var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
+    var amount by remember(initial) { mutableStateOf((if (initial?.kind == FuelKind.ELECTRIC) initial?.energy?.value else initial?.volume?.value)?.div(1000)?.toString() ?: "") }
+    var unitPrice by remember(initial) { mutableStateOf(initial?.unitPrice?.milli?.div(1000)?.toString() ?: "") }
     var cost by remember(initial) { mutableStateOf(initial?.totalCost?.minor?.div(100)?.toString() ?: "") }
     var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
     var label by remember(initial) { mutableStateOf(initial?.fuelLabel ?: "") }
@@ -444,17 +448,29 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
 
     ScreenHeader("Add fuel", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(kind == FuelKind.LIQUID, { kind = FuelKind.LIQUID }, label = { Text("Liquid fuel") }, leadingIcon = { Icon(Icons.Outlined.LocalGasStation, null, Modifier.size(16.dp)) }, modifier = Modifier.weight(1f))
+                    FilterChip(kind == FuelKind.ELECTRIC, { kind = FuelKind.ELECTRIC }, label = { Text("Electric charging") }, leadingIcon = { Icon(Icons.Outlined.Bolt, null, Modifier.size(16.dp)) }, modifier = Modifier.weight(1f))
+                }
+            }
+            item { OutlinedTextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Date") }, singleLine = true) }
             item { OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(amount, { amount = it }, Modifier.fillMaxWidth(), label = { Text("Volume (${v.volumeUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    OutlinedTextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                }
+            }
             item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { OutlinedTextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
-            item { OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text("Full tank") }
+                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text(if (kind == FuelKind.LIQUID) "Full tank" else "Full charge") }
                     Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
                 }
             }
+            item { OutlinedTextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
+            item { OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
             item { OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
             item {
                 TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
@@ -469,8 +485,11 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
                     OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
                     Button(onClick = {
                         val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-                        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive volume, and non-negative cost are required"
-                        else save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), kind = FuelKind.LIQUID, volume = Millilitres(a * 1_000), energy = null, unitPrice = null, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { "Fuel" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+                        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive measurement, and non-negative cost are required"
+                        else {
+                            val up = unitPrice.toLongOrNull()?.let { ca.terradevop.openodo.core.money.UnitPrice(it * 1000, v.currency) }
+                            save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = runCatching { LocalDate.parse(date) }.getOrDefault(LocalDate.now()), odometer = Metres(o * 1_000), kind = kind, volume = if (kind == FuelKind.LIQUID) Millilitres(a * 1_000) else null, energy = if (kind == FuelKind.ELECTRIC) WattHours(a * 1_000) else null, unitPrice = up, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+                        }
                     }, Modifier.weight(1f)) { Text("Save") }
                 }
             }
@@ -484,20 +503,39 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     var cost by remember(initial) { mutableStateOf(initial?.cost?.minor?.div(100)?.toString() ?: "") }
     var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
     val types = vm.recordTypes().collectAsState(initial = emptyList()).value
-    var type by remember(initial) { mutableStateOf(initial?.typeId ?: types.firstOrNull()?.id ?: 0) }
+    var category by remember(initial) { mutableStateOf(initial?.typeId?.let { id -> types.firstOrNull { it.id == id }?.category } ?: RecordCategory.SERVICE) }
+    var type by remember(initial) { mutableStateOf(initial?.typeId ?: 0) }
+    var performedBy by remember(initial) { mutableStateOf(initial?.performedBy ?: PerformedBy.SELF) }
+    var shop by remember(initial) { mutableStateOf(initial?.shopName ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
+    val categoryTypes = types.filter { it.category == category }
+    LaunchedEffect(category) { type = categoryTypes.firstOrNull()?.id ?: 0 }
 
     ScreenHeader("Add expense", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item { Text("Category", style = MaterialTheme.typography.titleSmall) }
+            item {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RecordCategory.entries.forEach { c -> FilterChip(category == c, { category = c }, label = { Text(c.name.lowercase().replaceFirstChar { it.uppercase() }) }) }
+                }
+            }
             item { Text("Record type", style = MaterialTheme.typography.titleSmall) }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    types.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
+                    categoryTypes.forEach { t -> FilterChip(type == t.id, { type = t.id }, label = { Text(t.name) }) }
                 }
             }
             item { OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
             item { OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item { OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { Text("Performed by", style = MaterialTheme.typography.titleSmall) }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(performedBy == PerformedBy.SELF, { performedBy = PerformedBy.SELF }, label = { Text("Self") })
+                    FilterChip(performedBy == PerformedBy.SHOP, { performedBy = PerformedBy.SHOP }, label = { Text("Shop") })
+                }
+            }
+            if (performedBy == PerformedBy.SHOP) item { OutlinedTextField(shop, { shop = it }, Modifier.fillMaxWidth(), label = { Text("Shop / mechanic name") }, singleLine = true) }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -505,7 +543,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
                     Button(onClick = {
                         val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
                         if (type == 0L || title.isBlank() || c == null || c < 0 || o == null || o < 0) error = "Choose a type and enter title, odometer, and non-negative cost"
-                        else save(ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), title = title, description = null, cost = Money(c * 100, v.currency), performedBy = PerformedBy.SELF, shopName = null, warrantyUntil = null, receiptFileName = null, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+                        else save(ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), title = title, description = null, cost = Money(c * 100, v.currency), performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = null, receiptFileName = null, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
                     }, Modifier.weight(1f)) { Text("Save") }
                 }
             }
@@ -558,13 +596,25 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
         return
     }
     val rs = if (v == null) emptyList<Reminder>() else vm.reminders(v.id).collectAsState(initial = emptyList()).value
+    val typeNames = vm.recordTypes().collectAsState(initial = emptyList()).value.associate { it.id to it.name }
+    var filter by remember { mutableStateOf<ReminderState?>(null) }
+    val statuses = rs.map { it to DueCalculator.evaluate(it, v?.manualOdometer, LocalDate.now()) }
+    val filtered = if (filter == null) statuses else statuses.filter { it.second.state == filter }
     ScreenHeader("Reminders", modifier, actions = {
         TextButton(onClick = { form = true }) { Icon(Icons.Filled.Add, contentDescription = "Add reminder"); Spacer(Modifier.width(4.dp)); Text("Add") }
     }) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(filter == null, { filter = null }, label = { Text("All (${rs.size})") })
+                    listOf(ReminderState.OVERDUE, ReminderState.DUE_SOON, ReminderState.OK, ReminderState.INACTIVE).forEach { st ->
+                        FilterChip(filter == st, { filter = st }, label = { Text("${st.name.lowercase().replaceFirstChar { it.uppercase() }} (${statuses.count { it.second.state == st }})") })
+                    }
+                }
+            }
             item { Text("Whichever interval comes first", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            if (rs.isEmpty()) item { EmptyState("No reminders", "Add a service interval linked to a service type.", "Add reminder") { form = true } }
-            if (v != null) items(rs, key = { it.id }) { ReminderCard(it, v, vm, { editing = it }) }
+            if (filtered.isEmpty()) item { EmptyState("No reminders", "Add a service interval linked to a service type.", "Add reminder") { form = true } }
+            if (v != null) items(filtered, key = { it.first.id }) { (r, s) -> ReminderCard(r, s, typeNames[r.typeId] ?: "Service", v, vm, { editing = r }) }
         }
     }
 }
@@ -600,10 +650,27 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
 }
 
 @Composable
-private fun ReminderCard(r: Reminder, v: Vehicle, vm: AppViewModel, onEdit: () -> Unit) {
-    val s = DueCalculator.evaluate(r, v.manualOdometer, LocalDate.now())
+private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicle, vm: AppViewModel, onEdit: () -> Unit) {
     val overdue = s.state == ReminderState.OVERDUE
-    val accent = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val dueSoon = s.state == ReminderState.DUE_SOON
+    val accent = when { overdue -> MaterialTheme.colorScheme.error; dueSoon -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
+    val intervalParts = buildList {
+        r.intervalDistance?.let { add("${it.value / 1000} km") }
+        r.intervalMonths?.let { add("$it mo") }
+    }
+    val intervalText = if (intervalParts.isEmpty()) "No interval" else "Every ${intervalParts.joinToString(" or ")}"
+    val remainingDays = s.remainingDays
+    val remainingDistance = s.remainingDistance
+    val nextDueDate = s.nextDueDate
+    val nextDueOdometer = s.nextDueOdometer
+    val intervalDistance = r.intervalDistance
+    val remaining = when {
+        remainingDays != null && remainingDays < 0 -> "${-remainingDays} days past due"
+        remainingDistance != null && remainingDistance.value < 0 -> "${-remainingDistance.value / 1000} km past due"
+        remainingDays != null -> "$remainingDays days left"
+        remainingDistance != null -> "${remainingDistance.value / 1000} km left"
+        else -> null
+    }
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -611,13 +678,21 @@ private fun ReminderCard(r: Reminder, v: Vehicle, vm: AppViewModel, onEdit: () -
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Service #${r.typeId}", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 StatusPill(s.state.name, if (overdue) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer, if (overdue) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer)
             }
-            Text("Due ${s.nextDueDate ?: "after matching service"}", style = MaterialTheme.typography.bodySmall, color = accent)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(intervalText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (nextDueDate != null) Text("Due $nextDueDate", style = MaterialTheme.typography.bodySmall, color = accent)
+            if (nextDueOdometer != null) Text("Due at ${nextDueOdometer.value / 1000} km", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            remaining?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = accent, fontWeight = FontWeight.SemiBold) }
+            if (dueSoon && remainingDistance != null && intervalDistance != null) {
+                val progress = (remainingDistance.value.toFloat() / intervalDistance.value.toFloat()).coerceIn(0f, 1f)
+                LinearProgressIndicator(progress = { progress }, Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.tertiary, trackColor = MaterialTheme.colorScheme.surfaceVariant)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
-                TextButton(onClick = { vm.saveReminder(r.copy(anchorDate = LocalDate.now(), anchorOdometer = v.manualOdometer)) }) { Icon(Icons.Outlined.Refresh, contentDescription = null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Manual reset") }
+                TextButton(onClick = { vm.saveReminder(r.copy(anchorDate = LocalDate.now(), anchorOdometer = v.manualOdometer)) }) { Icon(Icons.Outlined.Refresh, contentDescription = null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Reset") }
+                IconButton(onClick = { vm.saveReminder(r.copy(active = false)) }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = "Deactivate", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }
