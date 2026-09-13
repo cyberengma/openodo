@@ -3,6 +3,8 @@ package ca.terradevop.openodo.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import ca.terradevop.openodo.core.model.Vehicle
 import ca.terradevop.openodo.core.model.ExpenseRecord
 import ca.terradevop.openodo.core.model.FuelEntry
@@ -19,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class AppViewModel @Inject constructor(
     private val expenses: ExpenseRecordRepository,
     private val reminders: ReminderRepository,
     private val recordTypes: RecordTypeRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     init {
         viewModelScope.launch {
@@ -47,17 +49,20 @@ class AppViewModel @Inject constructor(
             }
         }
     }
-    private val selected = MutableStateFlow<Long?>(null)
+    private val selected = MutableStateFlow<Long?>(context.getSharedPreferences("openodo", Context.MODE_PRIVATE).getLong("active_vehicle_id", 0L).takeIf { it != 0L })
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
         ShellState(active, archived, selectedId ?: active.firstOrNull()?.id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
-    fun select(id: Long) { selected.value = id }
+    fun select(id: Long) {
+        selected.value = id
+        context.getSharedPreferences("openodo", Context.MODE_PRIVATE).edit().putLong("active_vehicle_id", id).apply()
+    }
 
     fun save(vehicle: Vehicle) {
         viewModelScope.launch {
             val id = vehicles.save(vehicle)
-            selected.value = id
+            select(id)
         }
     }
 
