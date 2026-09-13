@@ -128,6 +128,15 @@ class AppViewModel @Inject constructor(
     suspend fun importDrivvo(csv: String): ImportResult = DrivvoImporter.import(csv)
     suspend fun importFuelio(csv: String): ImportResult = FuelioImporter.import(csv)
 
+    fun applyImport(result: ImportResult) {
+        viewModelScope.launch {
+            val newVehicleId = result.domain.vehicles.firstOrNull()?.let { vehicles.save(it.copy(id = 0)) }
+            result.domain.recordTypes.forEach { recordTypes.save(it.copy(id = 0)) }
+            result.domain.fuelEntries.forEach { fuels.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId)) }
+            result.domain.expenseRecords.forEach { expenses.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId)) }
+        }
+    }
+
     suspend fun restoreJson(source: String): Result<Unit> = runCatching {
         val domain = BackupV1.read(source).getOrThrow()
         domain.vehicles.forEach { vehicles.save(it) }
