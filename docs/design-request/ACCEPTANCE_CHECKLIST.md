@@ -8,6 +8,9 @@ The package is ready for approval only when every item is satisfied.
 - [ ] Offline/privacy constraints are explicit.
 - [ ] No account, sync, network, analytics, or unsupported feature was added.
 - [ ] Canonical units and currency behavior are documented.
+- [ ] Distance, volume, energy, and currency are explicitly vehicle-scoped.
+- [ ] Switching vehicles changes display formatting without changing
+      canonical stored values.
 
 ## Screens
 
@@ -20,7 +23,8 @@ The package is ready for approval only when every item is satisfied.
 - [ ] Reminder list.
 - [ ] Reminder create/edit/detail.
 - [ ] Statistics/trends.
-- [ ] Settings.
+- [ ] Settings, with vehicle-scoped units/currency kept out of global
+      preferences.
 - [ ] Backup/import/export flows.
 
 ## Behavior

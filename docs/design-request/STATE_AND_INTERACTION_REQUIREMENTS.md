@@ -44,6 +44,18 @@ Document:
 - Import/restore confirmation and result destination.
 - State preservation when moving between tabs or destinations.
 
+## Vehicle-scoped display configuration
+
+- Distance unit, volume unit, energy unit, and currency are properties of the
+  vehicle, not global application settings.
+- Switching vehicles changes formatting on dashboard, forms, history,
+  reminders, statistics, and reports to the selected vehicle's configuration.
+- Forms must label values using the active vehicle's configuration.
+- Editing a vehicle's display configuration must not convert or mutate
+  canonical stored values.
+- Multi-vehicle views must not assume one global unit or currency.
+- Backup/import designs must preserve each vehicle's configuration.
+
 ## Reminder interaction rules
 
 - Both intervals use whichever elapses first.

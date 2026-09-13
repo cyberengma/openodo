@@ -46,8 +46,11 @@ The domain stores exact values, not display values:
 | Record date | ISO `LocalDate` |
 | Audit timestamps | epoch milliseconds |
 
-The UI chooses display units from vehicle settings. It must label every
-displayed number with its unit and currency where applicable.
+Each vehicle owns its display configuration: distance unit, volume unit,
+energy unit, and currency. Switching vehicles must switch all unit and
+currency formatting with the active vehicle. The UI must label every
+displayed number with the active vehicle's unit and currency. Global settings
+must never change the interpretation of another vehicle's stored data.
 
 ## Domain capabilities already defined
 

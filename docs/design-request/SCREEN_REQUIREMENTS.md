@@ -26,6 +26,11 @@ current odometer, and archived state. Long names must not break the layout.
 Specify fields for name, make, model, year, VIN, photo, distance unit,
 volume unit, energy unit, currency, manual odometer, and notes.
 
+Distance, volume, energy, and currency choices belong to this vehicle and
+are persisted with it. Switching vehicles must switch all display formatting
+to the selected vehicle's configuration. One vehicle may use kilometres,
+litres, and CAD while another uses miles, gallons, and USD.
+
 Define required versus optional fields, invalid input behavior, save/cancel
 behavior, unsaved-change confirmation, and archive behavior. The design must
 not imply VIN or plate data is transmitted anywhere.
@@ -173,10 +178,14 @@ explicit units, accessible labels, and a no-data/insufficient-data state.
 
 ## 11. Settings
 
-Include vehicle management, active vehicle, unit and currency settings,
-fuel labels, default record types, reminder preferences, backup/export,
-import, receipt/photo handling, about/license, and privacy/offline
-information.
+Include vehicle management, active vehicle, fuel labels, default record
+types, reminder preferences, backup/export, import, receipt/photo handling,
+about/license, and privacy/offline information.
+
+Do not place distance unit, volume unit, energy unit, or currency in global
+settings. Those values are edited from each vehicle's create/edit screen.
+Settings may provide a shortcut to edit the active vehicle's configuration,
+but must make the vehicle scope explicit.
 
 Do not include accounts, sync, analytics, network settings, or online-only
 features.
