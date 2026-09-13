@@ -80,6 +80,10 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch { fuels.save(entry) }
     }
 
+    fun deleteFuel(entry: FuelEntry) {
+        viewModelScope.launch { fuels.delete(entry) }
+    }
+
     fun saveExpense(record: ExpenseRecord) {
         viewModelScope.launch {
             expenses.save(record)
@@ -87,6 +91,14 @@ class AppViewModel @Inject constructor(
                 .let { ResetResolver.onRecordLogged(it, record) }
                 .forEach { reminders.save(it) }
         }
+    }
+
+    fun deleteExpense(record: ExpenseRecord) {
+        viewModelScope.launch { expenses.delete(record) }
+    }
+
+    fun deleteVehicle(vehicle: Vehicle) {
+        viewModelScope.launch { vehicles.delete(vehicle) }
     }
 
     fun reminders(vehicleId: Long) = reminders.observeForVehicle(vehicleId)
