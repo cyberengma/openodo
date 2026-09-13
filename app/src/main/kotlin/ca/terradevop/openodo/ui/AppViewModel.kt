@@ -4,6 +4,10 @@ package ca.terradevop.openodo.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ca.terradevop.openodo.core.model.Vehicle
+import ca.terradevop.openodo.core.model.ExpenseRecord
+import ca.terradevop.openodo.core.model.FuelEntry
+import ca.terradevop.openodo.data.ExpenseRecordRepository
+import ca.terradevop.openodo.data.FuelEntryRepository
 import ca.terradevop.openodo.data.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,7 +25,11 @@ data class ShellState(
 )
 
 @HiltViewModel
-class AppViewModel @Inject constructor(private val vehicles: VehicleRepository) : ViewModel() {
+class AppViewModel @Inject constructor(
+    private val vehicles: VehicleRepository,
+    private val fuels: FuelEntryRepository,
+    private val expenses: ExpenseRecordRepository,
+) : ViewModel() {
     private val selected = MutableStateFlow<Long?>(null)
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
         ShellState(active, archived, selectedId ?: active.firstOrNull()?.id)
@@ -34,5 +42,16 @@ class AppViewModel @Inject constructor(private val vehicles: VehicleRepository) 
             val id = vehicles.save(vehicle)
             selected.value = id
         }
+    }
+
+    fun fuelEntries(vehicleId: Long) = fuels.observeForVehicle(vehicleId)
+    fun expenseRecords(vehicleId: Long) = expenses.observeForVehicle(vehicleId)
+
+    fun saveFuel(entry: FuelEntry) {
+        viewModelScope.launch { fuels.save(entry) }
+    }
+
+    fun saveExpense(record: ExpenseRecord) {
+        viewModelScope.launch { expenses.save(record) }
     }
 }

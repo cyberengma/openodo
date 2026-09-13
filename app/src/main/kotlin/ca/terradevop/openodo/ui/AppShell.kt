@@ -4,6 +4,7 @@ package ca.terradevop.openodo.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -31,10 +32,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.Flow
 import ca.terradevop.openodo.core.model.Vehicle
+import ca.terradevop.openodo.core.model.FuelEntry
+import ca.terradevop.openodo.core.model.FuelKind
+import ca.terradevop.openodo.core.model.ExpenseRecord
+import ca.terradevop.openodo.core.model.RecordCategory
+import ca.terradevop.openodo.core.model.PerformedBy
+import ca.terradevop.openodo.core.money.Money
+import ca.terradevop.openodo.core.money.UnitPrice
+import ca.terradevop.openodo.core.units.Metres
+import ca.terradevop.openodo.core.units.Millilitres
+import ca.terradevop.openodo.core.units.WattHours
+import java.time.LocalDate
 import ca.terradevop.openodo.core.units.DistanceUnit
 import ca.terradevop.openodo.core.units.EnergyUnit
 import ca.terradevop.openodo.core.units.VolumeUnit
@@ -62,7 +76,7 @@ fun OpenOdoApp(viewModel: AppViewModel) {
         when (destination) {
             Destination.VEHICLES -> VehiclesScreen(state, viewModel, Modifier.padding(padding))
             Destination.DASHBOARD -> DashboardScreen(state, Modifier.padding(padding))
-            Destination.RECORDS -> PlaceholderScreen("Records", "Expense and fuel records will appear here.", Modifier.padding(padding))
+            Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding))
             Destination.REMINDERS -> PlaceholderScreen("Reminders", "Maintenance reminders will appear here.", Modifier.padding(padding))
             Destination.SETTINGS -> SettingsScreen(state, viewModel, Modifier.padding(padding))
         }
@@ -118,6 +132,51 @@ private fun DashboardScreen(state: ShellState, modifier: Modifier) { val vehicle
 
 @Composable
 private fun SettingsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) { Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Settings", style = MaterialTheme.typography.headlineSmall); Text("Active vehicle configuration", style = MaterialTheme.typography.titleMedium); state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { Text("${it.distanceUnit.name} • ${it.volumeUnit.name} • ${it.currency}") }; OutlinedButton(onClick = { }) { Text("Manage vehicles") } } }
+
+@Composable
+private fun RecordsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
+    val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
+    var mode by remember { mutableIntStateOf(0) }
+    var addingFuel by remember { mutableStateOf(false) }
+    var addingExpense by remember { mutableStateOf(false) }
+    val fuels = if (vehicle == null) null else viewModel.fuelEntries(vehicle.id).collectAsState(initial = emptyList()).value
+    val expenses = if (vehicle == null) null else viewModel.expenseRecords(vehicle.id).collectAsState(initial = emptyList()).value
+    if (addingFuel && vehicle != null) { FuelForm(vehicle, { viewModel.saveFuel(it); addingFuel = false }, { addingFuel = false }, modifier); return }
+    if (addingExpense && vehicle != null) { ExpenseForm(vehicle, { viewModel.saveExpense(it); addingExpense = false }, { addingExpense = false }, modifier); return }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("Records", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.weight(1f)); IconButton(onClick = { if (mode == 0) addingFuel = true else addingExpense = true }) { Text("+") } }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(selected = mode == 0, onClick = { mode = 0 }, label = { Text("Fuel") }); FilterChip(selected = mode == 1, onClick = { mode = 1 }, label = { Text("Expenses") }) }
+        if (mode == 0) {
+            if (fuels.isNullOrEmpty()) EmptyCard("No fuel entries", "Add fuel or charging to begin.") else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(fuels, key = { it.id }) { entry -> RecordCard("${entry.fuelLabel} • ${entry.kind.name}", entry.date.toString(), "${entry.totalCost.currency} ${entry.totalCost.minor}", "${entry.odometer.value} m") } }
+        } else {
+            if (expenses.isNullOrEmpty()) EmptyCard("No expense records", "Add service, repair, upgrade, or other work.") else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(expenses, key = { it.id }) { record -> RecordCard(record.title, record.date.toString(), "${record.cost.currency} ${record.cost.minor}", record.performedBy.name) } }
+        }
+    }
+}
+
+@Composable private fun EmptyCard(title: String, message: String) { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(title, style = MaterialTheme.typography.titleMedium); Text(message, style = MaterialTheme.typography.bodyMedium) } } }
+
+@Composable private fun RecordCard(title: String, date: String, amount: String, detail: String) { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { Text(title, style = MaterialTheme.typography.titleMedium); Text(date, style = MaterialTheme.typography.labelSmall); Row { Text(detail, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall); Text(amount, style = MaterialTheme.typography.labelLarge) } } } }
+
+@Composable private fun FuelForm(vehicle: Vehicle, onSave: (FuelEntry) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
+    var electric by remember { mutableStateOf(false) }; var odo by remember { mutableStateOf("") }; var amount by remember { mutableStateOf("") }; var cost by remember { mutableStateOf("") }; var label by remember { mutableStateOf("") }; var full by remember { mutableStateOf(true) }; var error by remember { mutableStateOf<String?>(null) }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Add ${if (electric) "charging" else "fuel"}", style = MaterialTheme.typography.headlineSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(selected = !electric, onClick = { electric = false }, label = { Text("Liquid") }); FilterChip(selected = electric, onClick = { electric = true }, label = { Text("Electric") }) }
+        OutlinedTextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${vehicle.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        OutlinedTextField(amount, { amount = it }, Modifier.fillMaxWidth(), label = { Text(if (electric) "Energy (${vehicle.energyUnit.name})" else "Volume (${vehicle.volumeUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${vehicle.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel or charging label") })
+        Row(verticalAlignment = Alignment.CenterVertically) { androidx.compose.material3.Checkbox(full, { full = it }); Text(if (electric) "Full charge" else "Full tank") }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val o = odo.toLongOrNull(); val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); if (o == null || a == null || a <= 0 || c == null || c < 0) error = "Enter a positive measurement and non-negative cost" else onSave(FuelEntry(vehicleId = vehicle.id, date = LocalDate.now(), odometer = Metres(o), kind = if (electric) FuelKind.ELECTRIC else FuelKind.LIQUID, volume = if (electric) null else Millilitres(a), energy = if (electric) WattHours(a) else null, unitPrice = null, totalCost = Money(c, vehicle.currency), fuelLabel = label.ifBlank { if (electric) "Charging" else "Fuel" }, fullTank = full, missedPreviousFillUp = false, stationName = null, receiptFileName = null, notes = null, createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis())) }) { Text("Save") } }
+    }
+}
+
+@Composable private fun ExpenseForm(vehicle: Vehicle, onSave: (ExpenseRecord) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
+    var title by remember { mutableStateOf("") }; var cost by remember { mutableStateOf("") }; var category by remember { mutableStateOf(RecordCategory.SERVICE) }; var error by remember { mutableStateOf<String?>(null) }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add expense", style = MaterialTheme.typography.headlineSmall); Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { RecordCategory.entries.forEach { FilterChip(selected = category == it, onClick = { category = it }, label = { Text(it.name) }) } }; OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }); OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${vehicle.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val value = cost.toLongOrNull(); if (title.isBlank() || value == null || value < 0) error = "Title and non-negative cost are required" else onSave(ExpenseRecord(0,vehicle.id,0,LocalDate.now(),Metres(0),title,null,Money(value,vehicle.currency),PerformedBy.SELF,null,null,null,null,System.currentTimeMillis(),System.currentTimeMillis())) }) { Text("Save") } } }
+}
 
 @Composable
 private fun PlaceholderScreen(title: String, message: String, modifier: Modifier) { Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text(title, style = MaterialTheme.typography.headlineSmall); Card(Modifier.fillMaxWidth()) { Text(message, Modifier.padding(20.dp)) } } }
