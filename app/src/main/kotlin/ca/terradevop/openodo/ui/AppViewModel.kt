@@ -116,6 +116,15 @@ class AppViewModel @Inject constructor(
     suspend fun importDrivvo(csv: String): ImportResult = DrivvoImporter.import(csv)
     suspend fun importFuelio(csv: String): ImportResult = FuelioImporter.import(csv)
 
+    suspend fun restoreJson(source: String): Result<Unit> = runCatching {
+        val domain = BackupV1.read(source).getOrThrow()
+        domain.vehicles.forEach { vehicles.save(it) }
+        domain.recordTypes.forEach { recordTypes.save(it) }
+        domain.fuelEntries.forEach { fuels.save(it) }
+        domain.expenseRecords.forEach { expenses.save(it) }
+        domain.reminders.forEach { reminders.save(it) }
+    }
+
     private suspend fun exportDomain(write: (PortabilityDomain, StringWriter) -> Unit): String {
         val domain = PortabilityDomain(
             vehicles = vehicles.observeActive().first() + vehicles.observeArchived().first(),

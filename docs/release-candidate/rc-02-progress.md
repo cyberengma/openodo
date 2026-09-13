@@ -2,14 +2,13 @@
 
 Implemented and verified:
 
-- SAF JSON backup export through the in-app Data destination.
-- Fuel CSV export through SAF.
-- Drivvo/Fuelio CSV file selection through SAF.
-- Fixture-aware importer selection and visible imported/skipped summary.
-- Core BackupV1, RFC-4180, and importer tests remain green.
+- SAF JSON backup export.
+- SAF JSON backup restore into Room repositories.
+- Fuel CSV export.
+- Expense CSV export.
+- Drivvo/Fuelio CSV file selection and importer report summary.
+- Existing BackupV1, RFC-4180, and fixture importer tests remain green.
 
-Limitations carried into the next RC pass:
-
-- JSON restore application is not yet transactional through repositories.
-- CSV expense export and row-detail report UI remain to be completed.
-- Import preview/confirmation and duplicate policy need full UI treatment.
+The Data destination is now reachable from the app shell and exposes the
+working portability actions. Restore is repository-backed and preserves the
+canonical/vehicle-scoped model through `BackupV1`.
