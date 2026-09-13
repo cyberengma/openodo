@@ -7,9 +7,11 @@ import ca.terradevop.openodo.core.model.Vehicle
 import ca.terradevop.openodo.core.model.ExpenseRecord
 import ca.terradevop.openodo.core.model.FuelEntry
 import ca.terradevop.openodo.core.model.Reminder
+import ca.terradevop.openodo.core.model.RecordType
 import ca.terradevop.openodo.data.ExpenseRecordRepository
 import ca.terradevop.openodo.data.FuelEntryRepository
 import ca.terradevop.openodo.data.ReminderRepository
+import ca.terradevop.openodo.data.RecordTypeRepository
 import ca.terradevop.openodo.data.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -17,8 +19,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ca.terradevop.openodo.core.model.DefaultRecordTypes
+import ca.terradevop.openodo.core.reminders.ResetResolver
 
 data class ShellState(
     val vehicles: List<Vehicle> = emptyList(),
@@ -32,7 +38,15 @@ class AppViewModel @Inject constructor(
     private val fuels: FuelEntryRepository,
     private val expenses: ExpenseRecordRepository,
     private val reminders: ReminderRepository,
+    private val recordTypes: RecordTypeRepository,
 ) : ViewModel() {
+    init {
+        viewModelScope.launch {
+            if (recordTypes.observeAll().first().isEmpty()) {
+                DefaultRecordTypes.all.forEach { recordTypes.save(it) }
+            }
+        }
+    }
     private val selected = MutableStateFlow<Long?>(null)
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
         ShellState(active, archived, selectedId ?: active.firstOrNull()?.id)
@@ -55,7 +69,12 @@ class AppViewModel @Inject constructor(
     }
 
     fun saveExpense(record: ExpenseRecord) {
-        viewModelScope.launch { expenses.save(record) }
+        viewModelScope.launch {
+            expenses.save(record)
+            reminders.observeForVehicle(record.vehicleId).first()
+                .let { ResetResolver.onRecordLogged(it, record) }
+                .forEach { reminders.save(it) }
+        }
     }
 
     fun reminders(vehicleId: Long) = reminders.observeForVehicle(vehicleId)
@@ -67,4 +86,6 @@ class AppViewModel @Inject constructor(
     fun deleteReminder(reminder: Reminder) {
         viewModelScope.launch { reminders.delete(reminder) }
     }
+
+    fun recordTypes() = recordTypes.observeAll()
 }

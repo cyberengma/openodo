@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +64,7 @@ private enum class Destination(val label: String) { VEHICLES("Vehicles"), DASHBO
 fun OpenOdoApp(viewModel: AppViewModel) {
     val state by viewModel.state.collectAsState()
     var destination by remember { mutableStateOf(Destination.DASHBOARD) }
+    var quickAction by remember { mutableStateOf<String?>(null) }
     Scaffold(
         bottomBar = {
             NavigationBar(modifier = Modifier.navigationBarsPadding()) {
@@ -79,9 +81,15 @@ fun OpenOdoApp(viewModel: AppViewModel) {
     ) { padding ->
         when (destination) {
             Destination.VEHICLES -> VehiclesScreen(state, viewModel, Modifier.padding(padding))
-            Destination.DASHBOARD -> DashboardScreen(state, Modifier.padding(padding))
-            Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding))
-            Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding))
+            Destination.DASHBOARD -> DashboardScreen(
+                state,
+                Modifier.padding(padding),
+                onFuel = { destination = Destination.RECORDS; quickAction = "fuel" },
+                onExpense = { destination = Destination.RECORDS; quickAction = "expense" },
+                onReminder = { destination = Destination.REMINDERS; quickAction = "reminder" },
+            )
+            Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding), quickAction, { quickAction = null })
+            Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding), quickAction == "reminder", { quickAction = null })
             Destination.SETTINGS -> SettingsScreen(state, viewModel, Modifier.padding(padding))
         }
     }
@@ -132,17 +140,43 @@ private fun VehicleForm(onSave: (Vehicle) -> Unit, onCancel: () -> Unit, modifie
 }
 
 @Composable
-private fun DashboardScreen(state: ShellState, modifier: Modifier) { val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }; if (vehicle == null) PlaceholderScreen("Dashboard", "Add a vehicle to begin.", modifier) else Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { Text(vehicle.name, style = MaterialTheme.typography.headlineSmall); Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp)) { Text("Current reading", style = MaterialTheme.typography.labelMedium); Text(vehicle.manualOdometer?.value?.toString() ?: "No reading", style = MaterialTheme.typography.displaySmall); Text(vehicle.distanceUnit.name) } }; Text("Quick actions", style = MaterialTheme.typography.titleMedium); Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Button(onClick = {}) { Text("Add fuel") }; OutlinedButton(onClick = {}) { Text("Add expense") } } } }
+private fun DashboardScreen(
+    state: ShellState,
+    modifier: Modifier,
+    onFuel: () -> Unit,
+    onExpense: () -> Unit,
+    onReminder: () -> Unit,
+) {
+    val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
+    if (vehicle == null) PlaceholderScreen("Dashboard", "Add a vehicle to begin.", modifier)
+    else Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(vehicle.name, style = MaterialTheme.typography.headlineSmall)
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(20.dp)) {
+                Text("Current reading", style = MaterialTheme.typography.labelMedium)
+                Text(vehicle.manualOdometer?.value?.toString() ?: "No reading", style = MaterialTheme.typography.displaySmall)
+                Text(vehicle.distanceUnit.name)
+            }
+        }
+        Text("Quick actions", style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onFuel) { Text("Add fuel") }
+            OutlinedButton(onClick = onExpense) { Text("Add expense") }
+            OutlinedButton(onClick = onReminder) { Text("Reminder") }
+        }
+    }
+}
 
 @Composable
 private fun SettingsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) { Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Settings", style = MaterialTheme.typography.headlineSmall); Text("Active vehicle configuration", style = MaterialTheme.typography.titleMedium); state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { Text("${it.distanceUnit.name} • ${it.volumeUnit.name} • ${it.currency}") }; OutlinedButton(onClick = { }) { Text("Manage vehicles") } } }
 
 @Composable
-private fun RemindersScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
+private fun RemindersScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier, openForm: Boolean = false, clearForm: () -> Unit = {}) {
     val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
     var editing by remember { mutableStateOf(false) }
+    LaunchedEffect(openForm) { if (openForm) { editing = true; clearForm() } }
     val reminders = if (vehicle == null) emptyList() else viewModel.reminders(vehicle.id).collectAsState(initial = emptyList()).value
-    if (editing && vehicle != null) { ReminderForm(vehicle, { viewModel.saveReminder(it); editing = false }, { editing = false }, modifier); return }
+    if (editing && vehicle != null) { ReminderForm(vehicle, viewModel, { viewModel.saveReminder(it); editing = false }, { editing = false }, modifier); return }
     Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) { Text("Reminders", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.weight(1f)); IconButton(onClick = { editing = true }) { Text("+") } }
         if (reminders.isEmpty()) EmptyCard("No reminders", "Add a maintenance reminder to stay ahead of service.") else if (vehicle != null) LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) { items(reminders, key = { it.id }) { reminder -> ReminderCard(reminder, viewModel, vehicle) } }
@@ -156,21 +190,36 @@ private fun ReminderCard(reminder: Reminder, viewModel: AppViewModel, vehicle: V
 }
 
 @Composable
-private fun ReminderForm(vehicle: Vehicle, onSave: (Reminder) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
+private fun ReminderForm(vehicle: Vehicle, viewModel: AppViewModel, onSave: (Reminder) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
     var months by remember { mutableStateOf("") }; var distance by remember { mutableStateOf("") }; var error by remember { mutableStateOf<String?>(null) }
-    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add reminder", style = MaterialTheme.typography.headlineSmall); OutlinedTextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); OutlinedTextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${vehicle.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val m = months.toIntOrNull(); val d = distance.toLongOrNull(); if ((m == null || m <= 0) && (d == null || d <= 0)) error = "At least one positive interval is required" else onSave(Reminder(vehicleId = vehicle.id, typeId = 0, intervalDistance = d?.let { Metres(it * 1_000) }, intervalMonths = m, anchorDate = null, anchorOdometer = null, active = true)) }) { Text("Save") } } }
+    val recordTypes = viewModel.recordTypes().collectAsState(initial = emptyList()).value
+    var typeId by remember { mutableStateOf(0L) }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Add reminder", style = MaterialTheme.typography.headlineSmall)
+        Text("Service type", style = MaterialTheme.typography.labelLarge)
+        LazyColumn(modifier = Modifier.heightIn(max = 140.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { items(recordTypes.filter { it.category == RecordCategory.SERVICE }) { type -> FilterChip(selected = typeId == type.id, onClick = { typeId = type.id }, label = { Text(type.name) }) } }
+        OutlinedTextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        OutlinedTextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${vehicle.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val m = months.toIntOrNull(); val d = distance.toLongOrNull(); if (typeId == 0L) error = "Choose a service type" else if ((m == null || m <= 0) && (d == null || d <= 0)) error = "At least one positive interval is required" else onSave(Reminder(vehicleId = vehicle.id, typeId = typeId, intervalDistance = d?.let { Metres(it * 1_000) }, intervalMonths = m, anchorDate = null, anchorOdometer = null, active = true)) }) { Text("Save") } }
+    }
 }
 
 @Composable
-private fun RecordsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
+private fun RecordsScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier, initialAction: String?, clearAction: () -> Unit) {
     val vehicle = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
     var mode by remember { mutableIntStateOf(0) }
     var addingFuel by remember { mutableStateOf(false) }
     var addingExpense by remember { mutableStateOf(false) }
+    LaunchedEffect(initialAction) {
+        if (initialAction == "fuel") addingFuel = true
+        if (initialAction == "expense") addingExpense = true
+        if (initialAction != null) clearAction()
+    }
     val fuels = if (vehicle == null) null else viewModel.fuelEntries(vehicle.id).collectAsState(initial = emptyList()).value
     val expenses = if (vehicle == null) null else viewModel.expenseRecords(vehicle.id).collectAsState(initial = emptyList()).value
     if (addingFuel && vehicle != null) { FuelForm(vehicle, { viewModel.saveFuel(it); addingFuel = false }, { addingFuel = false }, modifier); return }
-    if (addingExpense && vehicle != null) { ExpenseForm(vehicle, { viewModel.saveExpense(it); addingExpense = false }, { addingExpense = false }, modifier); return }
+    if (addingExpense && vehicle != null) { ExpenseForm(vehicle, viewModel, { viewModel.saveExpense(it); addingExpense = false }, { addingExpense = false }, modifier); return }
     Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) { Text("Records", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.weight(1f)); IconButton(onClick = { if (mode == 0) addingFuel = true else addingExpense = true }) { Text("+") } }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(selected = mode == 0, onClick = { mode = 0 }, label = { Text("Fuel") }); FilterChip(selected = mode == 1, onClick = { mode = 1 }, label = { Text("Expenses") }) }
@@ -201,9 +250,11 @@ private fun RecordsScreen(state: ShellState, viewModel: AppViewModel, modifier: 
     }
 }
 
-@Composable private fun ExpenseForm(vehicle: Vehicle, onSave: (ExpenseRecord) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
+@Composable private fun ExpenseForm(vehicle: Vehicle, viewModel: AppViewModel, onSave: (ExpenseRecord) -> Unit, onCancel: () -> Unit, modifier: Modifier) {
     var title by remember { mutableStateOf("") }; var cost by remember { mutableStateOf("") }; var category by remember { mutableStateOf(RecordCategory.SERVICE) }; var error by remember { mutableStateOf<String?>(null) }
-    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add expense", style = MaterialTheme.typography.headlineSmall); Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { RecordCategory.entries.forEach { FilterChip(selected = category == it, onClick = { category = it }, label = { Text(it.name) }) } }; OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }); OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${vehicle.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val value = cost.toLongOrNull(); if (title.isBlank() || value == null || value < 0) error = "Title and non-negative cost are required" else onSave(ExpenseRecord(0,vehicle.id,0,LocalDate.now(),Metres(0),title,null,Money(value,vehicle.currency),PerformedBy.SELF,null,null,null,null,System.currentTimeMillis(),System.currentTimeMillis())) }) { Text("Save") } } }
+    val types = viewModel.recordTypes().collectAsState(initial = emptyList()).value.filter { it.category == category }
+    var typeId by remember { mutableStateOf(0L) }
+    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add expense", style = MaterialTheme.typography.headlineSmall); Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { RecordCategory.entries.forEach { FilterChip(selected = category == it, onClick = { category = it; typeId = 0L }, label = { Text(it.name) }) } }; LazyColumn(modifier = Modifier.heightIn(max = 120.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { items(types) { type -> FilterChip(selected = typeId == type.id, onClick = { typeId = type.id }, label = { Text(type.name) }) } }; OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }); OutlinedTextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${vehicle.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { OutlinedButton(onClick = onCancel) { Text("Cancel") }; Button(onClick = { val value = cost.toLongOrNull(); if (typeId == 0L) error = "Choose a record type" else if (title.isBlank() || value == null || value < 0) error = "Title and non-negative cost are required" else onSave(ExpenseRecord(0,vehicle.id,typeId,LocalDate.now(),Metres(0),title,null,Money(value,vehicle.currency),PerformedBy.SELF,null,null,null,null,System.currentTimeMillis(),System.currentTimeMillis())) }) { Text("Save") } } }
 }
 
 @Composable
