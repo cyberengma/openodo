@@ -1,0 +1,10 @@
+OpenOdo is a private, offline vehicle log for people who want their fuel,
+charging, maintenance, expenses and reminders to stay on their device.
+
+Track liquid fuel and electric charging with exact units and costs. Keep one
+unified history for service, repair, upgrade and other work. Create reminders
+that reset automatically when matching work is logged. Review fuel economy,
+cost and trend statistics, and import existing Drivvo or Fuelio CSV data.
+
+OpenOdo has no account, ads, analytics, trackers, cloud sync or network
+requirement. It is free software released under GPL-3.0-only.

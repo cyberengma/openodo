@@ -1,0 +1,20 @@
+AntiFeatures: []
+Categories:
+  - Money
+License: GPL-3.0-only
+SourceCode: https://github.com/cyberengma/openodo
+IssueTracker: https://github.com/cyberengma/openodo/issues
+Changelog: https://github.com/cyberengma/openodo/releases
+RepoType: git
+Repo: https://github.com/cyberengma/openodo.git
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: app
+    gradle:
+      - yes
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

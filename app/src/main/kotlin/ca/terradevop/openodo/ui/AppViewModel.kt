@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ca.terradevop.openodo.core.model.DefaultRecordTypes
 import ca.terradevop.openodo.core.reminders.ResetResolver
+import ca.terradevop.openodo.core.portability.BackupV1
+import ca.terradevop.openodo.core.portability.PortabilityDomain
 
 data class ShellState(
     val vehicles: List<Vehicle> = emptyList(),
@@ -93,4 +95,13 @@ class AppViewModel @Inject constructor(
     }
 
     fun recordTypes() = recordTypes.observeAll()
+
+    suspend fun backupJson(): String {
+        val vehicles = vehicles.observeActive().first() + vehicles.observeArchived().first()
+        val types = recordTypes.observeAll().first()
+        val fuel = vehicles.flatMap { fuels.observeForVehicle(it.id).first() }
+        val expenses = vehicles.flatMap { this.expenses.observeForVehicle(it.id).first() }
+        val reminders = vehicles.flatMap { this.reminders.observeForVehicle(it.id).first() }
+        return BackupV1.write(PortabilityDomain(vehicles, types, fuel, expenses, reminders), System.currentTimeMillis(), "0.1.0")
+    }
 }

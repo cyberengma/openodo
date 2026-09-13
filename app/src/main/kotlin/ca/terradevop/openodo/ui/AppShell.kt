@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import ca.terradevop.openodo.core.model.*
 import ca.terradevop.openodo.core.money.Money
 import ca.terradevop.openodo.core.reminders.DueCalculator
@@ -21,7 +25,7 @@ import ca.terradevop.openodo.core.reminders.ReminderState
 import ca.terradevop.openodo.core.units.*
 import java.time.LocalDate
 
-private enum class Destination(val label: String) { VEHICLES("Vehicles"), DASHBOARD("Dashboard"), RECORDS("Records"), REMINDERS("Reminders"), SETTINGS("Settings") }
+private enum class Destination(val label: String) { VEHICLES("Vehicles"), DASHBOARD("Dashboard"), RECORDS("Records"), REMINDERS("Reminders"), SETTINGS("Settings"), DATA("Data") }
 
 @Composable
 fun OpenOdoApp(viewModel: AppViewModel) {
@@ -35,6 +39,7 @@ fun OpenOdoApp(viewModel: AppViewModel) {
             Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding), action) { action = null }
             Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding), action == "reminder") { action = null }
             Destination.SETTINGS -> SettingsScreen(state, Modifier.padding(padding))
+            Destination.DATA -> PortabilityScreen(viewModel, Modifier.padding(padding))
         }
     }
 }
@@ -46,6 +51,7 @@ fun OpenOdoApp(viewModel: AppViewModel) {
 @Composable private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifier, action: String?, clear: () -> Unit) { val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }; var mode by remember { mutableIntStateOf(0) }; var addFuel by remember(action) { mutableStateOf(action == "fuel") }; var addExpense by remember(action) { mutableStateOf(action == "expense") }; LaunchedEffect(action) { if (action != null) clear() }; if (v != null && addFuel) { FuelForm(v, { vm.saveFuel(it); addFuel = false }, { addFuel = false }, modifier); return }; if (v != null && addExpense) { ExpenseForm(v, vm, { vm.saveExpense(it); addExpense = false }, { addExpense = false }, modifier); return }; val fuels = v?.let { vm.fuelEntries(it.id).collectAsState(initial = emptyList()).value }; val expenses = v?.let { vm.expenseRecords(it.id).collectAsState(initial = emptyList()).value }; Frame("Records", modifier, { TextButton({ if (mode == 0) addFuel = true else addExpense = true }) { Text("+ Add") } }) { Column(Modifier.padding(20.dp)) { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(mode == 0, { mode = 0 }, label = { Text("Fuel") }); FilterChip(mode == 1, { mode = 1 }, label = { Text("Expenses") }) }; Spacer(Modifier.height(12.dp)); if (mode == 0) { if (fuels.isNullOrEmpty()) EmptyCard("No fuel history", "Log your first fill-up.", "Add fuel") { addFuel = true } else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(fuels, key = { it.id }) { FuelCard(it) } } } else { if (expenses.isNullOrEmpty()) EmptyCard("No expenses", "Log your first service record.", "Add expense") { addExpense = true } else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(expenses, key = { it.id }) { ExpenseCard(it) } } } } } }
 @Composable private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modifier, open: Boolean, clear: () -> Unit) { val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }; var form by remember(open) { mutableStateOf(open) }; LaunchedEffect(open) { if (open) clear() }; if (v != null && form) { ReminderForm(v, vm, { vm.saveReminder(it); form = false }, { form = false }, modifier); return }; val rs = if (v == null) emptyList<Reminder>() else vm.reminders(v.id).collectAsState(initial = emptyList()).value; Frame("Reminders", modifier, { TextButton({ form = true }) { Text("+ Add") } }) { LazyColumn(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { item { Text("Whichever interval comes first", style = MaterialTheme.typography.bodySmall) }; if (rs.isEmpty()) item { EmptyCard("No reminders", "Add a service interval.", "Add reminder") { form = true } }; if (v != null) items(rs, key = { it.id }) { ReminderCard(it, v, vm) } } } }
 @Composable private fun SettingsScreen(state: ShellState, modifier: Modifier) { Frame("Settings", modifier) { LazyColumn(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { item { SettingsCard("Active vehicle", state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.currency ?: "No vehicle") }; item { SettingsCard("Backup & migration", "JSON • CSV • Drivvo • Fuelio") }; item { SettingsCard("Privacy", "Offline-first • zero tracking") } } } }
+@Composable private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) { val context = LocalContext.current; val scope = rememberCoroutineScope(); var message by remember { mutableStateOf<String?>(null) }; val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> if (uri != null) scope.launch { context.contentResolver.openOutputStream(uri)?.use { it.write(vm.backupJson().toByteArray()) }; message = "Backup created" } }; Frame("Portability", modifier) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Keep your data portable and local."); Button({ launcher.launch("openodo-backup.json") }) { Text("Create JSON backup") }; message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }; SettingsCard("CSV export", "Available from the local export workflow"); SettingsCard("Import", "Drivvo and Fuelio migration") } } }
 @Composable private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: Modifier) { var name by remember { mutableStateOf("") }; Column(modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Text("Add vehicle", style = MaterialTheme.typography.headlineSmall); OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Vehicle name") }); Row { OutlinedButton(cancel) { Text("Cancel") }; Spacer(Modifier.width(8.dp)); Button({ save(Vehicle(name = name, make = "", model = "", year = 2024, vin = null, photoFileName = null, distanceUnit = DistanceUnit.KILOMETRES, volumeUnit = VolumeUnit.LITRES, energyUnit = EnergyUnit.KILOWATT_HOURS, currency = "USD", manualOdometer = null, manualOdometerAt = null, isArchived = false, notes = null, createdAt = 0, updatedAt = 0)) }, enabled = name.isNotBlank()) { Text("Save") } } } }
 @Composable private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier) {
     var amount by remember { mutableStateOf("") }; var cost by remember { mutableStateOf("") }; var odo by remember { mutableStateOf("") }; var label by remember { mutableStateOf("") }; var error by remember { mutableStateOf<String?>(null) }

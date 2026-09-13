@@ -61,7 +61,7 @@ kotlin {
 }
 
 tasks.whenTaskAdded {
-    if (name.contains("Crunch") || name.contains("ArtProfile")) {
+    if (name.contains("Crunch") || name.contains("ArtProfile") || name.contains("ComposeMapping")) {
         enabled = false
     }
 }

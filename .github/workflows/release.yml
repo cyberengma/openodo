@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install SDK tools
+        run: sdkmanager "platforms;android-37" "build-tools;34.0.0"
+      - name: Build unsigned release
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Sign release
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          test -n "$RELEASE_KEYSTORE_B64"
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/keys/release.jks"
+          apksigner sign --ks "$RUNNER_TEMP/keys/release.jks" --ks-pass "pass:$RELEASE_STORE_PASSWORD" --ks-key-alias "$RELEASE_KEY_ALIAS" --key-pass "pass:$RELEASE_KEY_PASSWORD" app/build/outputs/apk/release/app-release-unsigned.apk
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/openodo-release.apk
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/openodo-release.apk

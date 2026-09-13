@@ -1,0 +1,2 @@
+Initial OpenOdo test release with offline vehicle logs, fuel and expense
+tracking, maintenance reminders, local persistence, and portability support.
