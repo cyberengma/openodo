@@ -30,11 +30,13 @@ class RoomVehicleRepository @Inject constructor(private val dao: VehicleDao) : V
 
 interface RecordTypeRepository {
     fun observeAll(): Flow<List<RecordType>>
+    suspend fun find(id: Long): RecordType?
     suspend fun save(type: RecordType): Long
 }
 
 class RoomRecordTypeRepository @Inject constructor(private val dao: RecordTypeDao) : RecordTypeRepository {
     override fun observeAll() = dao.observeAll().map { it.map(RecordTypeEntity::toCore) }
+    override suspend fun find(id: Long) = dao.findById(id)?.toCore()
     override suspend fun save(type: RecordType): Long {
         val entity = type.toEntity()
         if (entity.id == 0L) return dao.insert(entity)
