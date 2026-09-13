@@ -223,6 +223,30 @@ private fun SettingsRow(title: String, detail: String, onClick: (() -> Unit)? = 
 // ---------- Vehicles ----------
 
 @Composable
+private fun FormTopBar(title: String, onClose: () -> Unit, onSave: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close") }
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Button(onClick = onSave) { Text("Save") }
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+}
+
+@Composable
+private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+    }
+}
+
+@Composable
 private fun VehiclesScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
     var form by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Vehicle?>(null) }
@@ -395,11 +419,16 @@ private fun ActionTile(icon: ImageVector, label: String, onClick: () -> Unit, mo
 private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifier, action: String?, clear: () -> Unit) {
     val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
     var mode by remember { mutableIntStateOf(0) }
-    var addFuel by remember(action) { mutableStateOf(action == "fuel") }
-    var addExpense by remember(action) { mutableStateOf(action == "expense") }
+    var addFuel by remember { mutableStateOf(action == "fuel") }
+    var addExpense by remember { mutableStateOf(action == "expense") }
     var editingFuel by remember { mutableStateOf<FuelEntry?>(null) }
     var editingExpense by remember { mutableStateOf<ExpenseRecord?>(null) }
-    LaunchedEffect(action) { if (action != null) clear() }
+    LaunchedEffect(action) {
+        when (action) {
+            "fuel" -> { addFuel = true; clear() }
+            "expense" -> { addExpense = true; clear() }
+        }
+    }
 
     if (v != null && (addFuel || editingFuel != null)) {
         FuelForm(v, { vm.saveFuel(it); addFuel = false; editingFuel = null }, { addFuel = false; editingFuel = null }, modifier, editingFuel)
@@ -449,8 +478,17 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     var receipt by remember(initial) { mutableStateOf(initial?.receiptFileName) }
     var error by remember { mutableStateOf<String?>(null) }
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> receipt = uri?.toString() }
+    val doSave: () -> Unit = {
+        val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
+        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive measurement, and non-negative cost are required"
+        else {
+            val up = unitPrice.toLongOrNull()?.let { ca.terradevop.openodo.core.money.UnitPrice(it * 1000, v.currency) }
+            save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = runCatching { LocalDate.parse(date) }.getOrDefault(LocalDate.now()), odometer = Metres(o * 1_000), kind = kind, volume = if (kind == FuelKind.LIQUID) Millilitres(a * 1_000) else null, energy = if (kind == FuelKind.ELECTRIC) WattHours(a * 1_000) else null, unitPrice = up, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+        }
+    }
 
-    ScreenHeader("Add fuel", modifier) {
+    Column(modifier.fillMaxSize()) {
+        FormTopBar("Add fuel", onClose = cancel, onSave = doSave)
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -458,45 +496,40 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
                     FilterChip(kind == FuelKind.ELECTRIC, { kind = FuelKind.ELECTRIC }, label = { Text("Electric charging") }, leadingIcon = { Icon(Icons.Outlined.Bolt, null, Modifier.size(16.dp)) }, modifier = Modifier.weight(1f))
                 }
             }
-            item { TextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Date") }, singleLine = true) }
-            item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                    TextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                SectionCard {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        TextField(date, { date = it }, Modifier.weight(1f), label = { Text("Date") }, singleLine = true)
+                    }
+                    TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
                 }
             }
-            item { TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text(if (kind == FuelKind.LIQUID) "Full tank" else "Full charge") }
-                    Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
+                SectionCard {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        TextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                        TextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    }
+                    TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text(if (kind == FuelKind.LIQUID) "Full tank" else "Full charge") }
+                        Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
+                    }
                 }
             }
-            item { TextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true) }
-            item { TextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true) }
-            item { TextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
             item {
-                TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
-                    Icon(if (receipt == null) Icons.Outlined.AttachFile else Icons.Filled.CheckCircle, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(if (receipt == null) "Attach receipt" else "Receipt attached")
+                SectionCard {
+                    TextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true)
+                    TextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true)
+                    TextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2)
+                    TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
+                        Icon(if (receipt == null) Icons.Outlined.AttachFile else Icons.Filled.CheckCircle, contentDescription = null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (receipt == null) "Attach receipt" else "Receipt attached")
+                    }
                 }
             }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
-                    Button(onClick = {
-                        val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-                        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive measurement, and non-negative cost are required"
-                        else {
-                            val up = unitPrice.toLongOrNull()?.let { ca.terradevop.openodo.core.money.UnitPrice(it * 1000, v.currency) }
-                            save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = runCatching { LocalDate.parse(date) }.getOrDefault(LocalDate.now()), odometer = Metres(o * 1_000), kind = kind, volume = if (kind == FuelKind.LIQUID) Millilitres(a * 1_000) else null, energy = if (kind == FuelKind.ELECTRIC) WattHours(a * 1_000) else null, unitPrice = up, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
-                        }
-                    }, Modifier.weight(1f)) { Text("Save") }
-                }
-            }
         }
     }
 }
@@ -514,8 +547,14 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     var error by remember { mutableStateOf<String?>(null) }
     val categoryTypes = types.filter { it.category == category }
     LaunchedEffect(category) { type = categoryTypes.firstOrNull()?.id ?: 0 }
+    val doSave: () -> Unit = {
+        val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
+        if (type == 0L || title.isBlank() || c == null || c < 0 || o == null || o < 0) error = "Choose a type and enter title, odometer, and non-negative cost"
+        else save(ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), title = title, description = null, cost = Money(c * 100, v.currency), performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = null, receiptFileName = null, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+    }
 
-    ScreenHeader("Add expense", modifier) {
+    Column(modifier.fillMaxSize()) {
+        FormTopBar("Add expense", onClose = cancel, onSave = doSave)
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Category", style = MaterialTheme.typography.titleSmall) }
             item {
@@ -539,16 +578,6 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
             }
             if (performedBy == PerformedBy.SHOP) item { TextField(shop, { shop = it }, Modifier.fillMaxWidth(), label = { Text("Shop / mechanic name") }, singleLine = true) }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
-                    Button(onClick = {
-                        val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-                        if (type == 0L || title.isBlank() || c == null || c < 0 || o == null || o < 0) error = "Choose a type and enter title, odometer, and non-negative cost"
-                        else save(ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), title = title, description = null, cost = Money(c * 100, v.currency), performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = null, receiptFileName = null, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
-                    }, Modifier.weight(1f)) { Text("Save") }
-                }
-            }
         }
     }
 }
@@ -612,9 +641,9 @@ private fun ExpenseCard(r: ExpenseRecord, onDelete: () -> Unit, onEdit: () -> Un
 @Composable
 private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modifier, open: Boolean, clear: () -> Unit) {
     val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
-    var form by remember(open) { mutableStateOf(open) }
+    var form by remember { mutableStateOf(open) }
     var editing by remember { mutableStateOf<Reminder?>(null) }
-    LaunchedEffect(open) { if (open) clear() }
+    LaunchedEffect(open) { if (open) { form = true; clear() } }
     if (v != null && (form || editing != null)) {
         ReminderForm(v, vm, { vm.saveReminder(it); form = false; editing = null }, { form = false; editing = null }, modifier, editing)
         return
