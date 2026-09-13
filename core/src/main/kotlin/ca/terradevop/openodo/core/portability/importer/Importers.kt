@@ -65,9 +65,9 @@ object DrivvoImporter {
                 row.firstOrNull() == "Vehicle Name" -> {
                     section = when {
                         row.getOrNull(1) == "Active" -> "vehicle"
-                        row.getOrNull(1) == "Odometer (km)" -> "refueling"
                         row.getOrNull(4)?.contains("expense", ignoreCase = true) == true -> "expense"
                         row.getOrNull(4)?.contains("service", ignoreCase = true) == true -> "service"
+                        row.getOrNull(1) == "Odometer (km)" -> "refueling"
                         else -> null
                     }
                 }

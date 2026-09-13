@@ -36,6 +36,7 @@ import ca.terradevop.openodo.core.fuel.FuelStatsResult
 import ca.terradevop.openodo.core.fuel.PriceStats
 import ca.terradevop.openodo.core.model.*
 import ca.terradevop.openodo.core.money.Money
+import ca.terradevop.openodo.core.money.CurrencyMinorDigits
 import ca.terradevop.openodo.core.portability.ImportResult
 import ca.terradevop.openodo.core.reminders.DueCalculator
 import ca.terradevop.openodo.core.reminders.ReminderState
@@ -632,7 +633,7 @@ private fun FuelCard(f: FuelEntry, onDelete: () -> Unit, onEdit: () -> Unit) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(f.fuelLabel, fontWeight = FontWeight.SemiBold)
-                Text("${f.date} • ${f.totalCost.currency} ${f.totalCost.minor}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${f.date} • ${f.totalCost.currency} ${formatMoney(f.totalCost.minor, f.totalCost.currency)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (f.receiptFileName != null) IconButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(f.receiptFileName), "image/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) } }) { Icon(Icons.Outlined.Receipt, contentDescription = "View receipt") }
             IconButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit") }
@@ -648,7 +649,7 @@ private fun ExpenseCard(r: ExpenseRecord, onDelete: () -> Unit, onEdit: () -> Un
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(r.title, fontWeight = FontWeight.SemiBold)
-                Text("${r.date} • ${r.cost.currency} ${r.cost.minor}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${r.date} • ${r.cost.currency} ${formatMoney(r.cost.minor, r.cost.currency)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (r.receiptFileName != null) IconButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(r.receiptFileName), "image/*").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) } }) { Icon(Icons.Outlined.Receipt, contentDescription = "View receipt") }
             IconButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit") }
@@ -841,7 +842,7 @@ private fun StatisticsScreen(state: ShellState, vm: AppViewModel, modifier: Modi
                 }
             }
             item { MetricCard("Average consumption", stats?.averageMlPer100Km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "Add fuel entries to calculate") }
-            item { MetricCard("Total fuel cost", stats?.totalCost?.let { "${it.currency} ${it.minor}" } ?: "No cost data") }
+            item { MetricCard("Total fuel cost", stats?.totalCost?.let { "${it.currency} ${formatMoney(it.minor, it.currency)}" } ?: "No cost data") }
             item { MetricCard("Cost per km", stats?.costPerKmMilli?.let { "${it.toDouble() / 1000.0}" } ?: "—") }
             item { MetricCard("Valid spans", stats?.spans?.count { it.valid }?.toString() ?: "0") }
             item { MetricCard("Best span", stats?.best?.mlPer100km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "—") }
@@ -950,4 +951,9 @@ private fun categoryIcon(c: RecordCategory): ImageVector = when (c) {
     RecordCategory.REPAIR -> Icons.Outlined.Handyman
     RecordCategory.UPGRADE -> Icons.Outlined.AutoAwesome
     RecordCategory.OTHER -> Icons.Outlined.MoreHoriz
+}
+
+private fun formatMoney(minor: Long, currency: String): String {
+    val digits = CurrencyMinorDigits.of(currency)
+    return java.math.BigDecimal(minor).movePointLeft(digits).setScale(digits).toPlainString()
 }
