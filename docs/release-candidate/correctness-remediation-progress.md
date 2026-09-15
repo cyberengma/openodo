@@ -34,3 +34,11 @@ Navigation/state phase:
   exit.
 - Forms intercept Back/Cancel and confirm before discarding dirty input.
 - Bottom navigation is hidden while full-screen forms are open.
+
+Correctness/navigation UI increment:
+
+- Recorded fuel and expense odometers now feed CurrentOdometer and reminder
+  evaluation instead of relying only on the manual override.
+- Manual reminder reset uses the effective record-derived odometer.
+- Statistics now exposes km/L next to L/100 km.
+- Vehicle-aware formatting remains centralized in VehicleValueFormatter.

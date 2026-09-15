@@ -37,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ca.terradevop.openodo.core.fuel.FuelStats
 import ca.terradevop.openodo.core.fuel.FuelStatsResult
+import ca.terradevop.openodo.core.fuel.Economy
 import ca.terradevop.openodo.core.fuel.PriceStats
 import ca.terradevop.openodo.core.model.*
 import ca.terradevop.openodo.core.money.Money
@@ -446,13 +447,15 @@ private fun DashboardScreen(
             return@ScreenHeader
         }
         val fuels = viewModel.fuelEntries(v.id).collectAsState(initial = emptyList()).value
+        val expenses = viewModel.expenseRecords(v.id).collectAsState(initial = emptyList()).value
         val reminders = viewModel.reminders(v.id).collectAsState(initial = emptyList()).value
+        val currentOdometer = currentOdometer(v, fuels, expenses)
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { HeroCard(v) }
+            item { HeroCard(v, currentOdometer) }
             item { QuickActions(onFuel, onExpense, onReminder) }
             item { Text("Active reminders", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             if (reminders.isEmpty()) item { EmptyState("No reminders yet", "Add a service interval to stay ahead.", "Add reminder", onReminder) }
-            items(reminders.take(3), key = { it.id }) { ReminderCard(it, DueCalculator.evaluate(it, v.manualOdometer, LocalDate.now()), "Service", v, viewModel, {}) }
+            items(reminders.take(3), key = { it.id }) { ReminderCard(it, DueCalculator.evaluate(it, currentOdometer, LocalDate.now()), "Service", v, currentOdometer, viewModel, {}) }
             item { Text("Recent fuel", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             if (fuels.isEmpty()) item { EmptyState("No fuel history", "Log your first fill-up or charging session.", "Add fuel", onFuel) }
             items(fuels.take(3), key = { it.id }) { FuelCard(it, {}, {}) }
@@ -461,13 +464,22 @@ private fun DashboardScreen(
 }
 
 @Composable
-private fun HeroCard(v: Vehicle) {
+private fun HeroCard(v: Vehicle, currentOdometer: Metres?) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("CURRENT READING", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontWeight = FontWeight.Bold)
-            Text(v.manualOdometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, Locale.getDefault()) } ?: "—", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            Text(currentOdometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, Locale.getDefault()) } ?: "—", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             Text(distanceLabel(v.distanceUnit), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
         }
+    }
+}
+
+private fun currentOdometer(vehicle: Vehicle, fuels: List<FuelEntry>, expenses: List<ExpenseRecord>): Metres? {
+    val readings = (fuels.map { RecordedOdometer(it.date, it.odometer) } + expenses.map { RecordedOdometer(it.date, it.odometer) })
+        .filter { it.odometer.value >= 0 }
+    return when (val result = CurrentOdometer.of(vehicle, readings)) {
+        is CurrentOdometerResult.Value -> result.odometer
+        CurrentOdometerResult.Empty -> null
     }
 }
 
@@ -779,9 +791,12 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
         return
     }
     val rs = if (v == null) emptyList<Reminder>() else vm.reminders(v.id).collectAsState(initial = emptyList()).value
+    val fuels = if (v == null) emptyList() else vm.fuelEntries(v.id).collectAsState(initial = emptyList()).value
+    val expenses = if (v == null) emptyList() else vm.expenseRecords(v.id).collectAsState(initial = emptyList()).value
+    val currentOdometer = v?.let { currentOdometer(it, fuels, expenses) }
     val typeNames = vm.recordTypes().collectAsState(initial = emptyList()).value.associate { it.id to it.name }
     var filter by remember { mutableStateOf<ReminderState?>(null) }
-    val statuses = rs.map { it to DueCalculator.evaluate(it, v?.manualOdometer, LocalDate.now()) }
+    val statuses = rs.map { it to DueCalculator.evaluate(it, currentOdometer, LocalDate.now()) }
     val filtered = if (filter == null) statuses else statuses.filter { it.second.state == filter }
     ScreenHeader("Reminders", modifier, actions = {
         TextButton(onClick = { form = true }) { Icon(Icons.Filled.Add, contentDescription = "Add reminder"); Spacer(Modifier.width(4.dp)); Text("Add") }
@@ -797,7 +812,7 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
             }
             item { Text("Whichever interval comes first", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (filtered.isEmpty()) item { EmptyState("No reminders", "Add a service interval linked to a service type.", "Add reminder") { form = true } }
-            if (v != null) items(filtered, key = { it.first.id }) { (r, s) -> ReminderCard(r, s, typeNames[r.typeId] ?: "Service", v, vm, { editing = r }) }
+            if (v != null) items(filtered, key = { it.first.id }) { (r, s) -> ReminderCard(r, s, typeNames[r.typeId] ?: "Service", v, currentOdometer, vm, { editing = r }) }
         }
     }
 }
@@ -846,7 +861,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
 }
 
 @Composable
-private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicle, vm: AppViewModel, onEdit: () -> Unit) {
+private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicle, currentOdometer: Metres?, vm: AppViewModel, onEdit: () -> Unit) {
     val overdue = s.state == ReminderState.OVERDUE
     val dueSoon = s.state == ReminderState.DUE_SOON
     val accent = when { overdue -> MaterialTheme.colorScheme.error; dueSoon -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
@@ -888,7 +903,7 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
-                TextButton(onClick = { vm.saveReminder(r.copy(anchorDate = LocalDate.now(), anchorOdometer = v.manualOdometer)) }) { Icon(Icons.Outlined.Refresh, contentDescription = null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Reset") }
+                TextButton(onClick = { vm.saveReminder(r.copy(anchorDate = LocalDate.now(), anchorOdometer = currentOdometer)) }, enabled = currentOdometer != null) { Icon(Icons.Outlined.Refresh, contentDescription = null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Reset") }
                 IconButton(onClick = { vm.saveReminder(r.copy(active = false)) }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = "Deactivate", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
@@ -967,6 +982,7 @@ private fun StatisticsScreen(state: ShellState, vm: AppViewModel, modifier: Modi
                 }
             }
             item { MetricCard("Average consumption", stats?.averageMlPer100Km?.let { "${it.toDouble() / 1000.0} L/100km" } ?: "Add fuel entries to calculate") }
+            item { MetricCard("Efficiency", stats?.averageMlPer100Km?.let { "${Economy.kmPerLitre(it, 2)} km/L" } ?: "—") }
             item { MetricCard("Total fuel cost", stats?.totalCost?.let { "${it.currency} ${formatMoney(it.minor, it.currency)}" } ?: "No cost data") }
             item { MetricCard("Cost per km", stats?.costPerKmMilli?.let { "${it.toDouble() / 1000.0}" } ?: "—") }
             item { MetricCard("Valid spans", stats?.spans?.count { it.valid }?.toString() ?: "0") }
