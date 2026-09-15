@@ -39,6 +39,7 @@ data class ShellState(
     val vehicles: List<Vehicle> = emptyList(),
     val archivedVehicles: List<Vehicle> = emptyList(),
     val activeVehicleId: Long? = null,
+    val isLoaded: Boolean = false,
 )
 
 @HiltViewModel
@@ -61,7 +62,7 @@ class AppViewModel @Inject constructor(
     private val selected = MutableStateFlow<Long?>(context.getSharedPreferences("openodo", Context.MODE_PRIVATE).getLong("active_vehicle_id", 0L).takeIf { it != 0L })
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
         val effectiveId = selectedId?.takeIf { id -> active.any { it.id == id } } ?: active.firstOrNull()?.id
-        ShellState(active, archived, effectiveId)
+        ShellState(active, archived, effectiveId, isLoaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     fun select(id: Long) {

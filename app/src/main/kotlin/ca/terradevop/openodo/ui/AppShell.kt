@@ -31,6 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import ca.terradevop.openodo.core.fuel.FuelStats
 import ca.terradevop.openodo.core.fuel.FuelStatsResult
 import ca.terradevop.openodo.core.fuel.PriceStats
@@ -49,73 +53,97 @@ import java.time.Clock
 import java.time.LocalDate
 import java.util.Locale
 
-private enum class Destination(val label: String, val icon: ImageVector) {
-    VEHICLES("Vehicles", Icons.Outlined.DirectionsCar),
-    DASHBOARD("Dashboard", Icons.Outlined.Speed),
-    RECORDS("Records", Icons.Outlined.ReceiptLong),
-    REMINDERS("Reminders", Icons.Outlined.Notifications),
-    SETTINGS("Settings", Icons.Outlined.Settings),
-    STATS("Stats", Icons.Outlined.BarChart),
-    DATA("Data", Icons.Outlined.Storage),
-    TYPES("Types", Icons.Outlined.Category),
+private enum class Destination(val route: String, val label: String, val icon: ImageVector) {
+    VEHICLES("vehicles", "Vehicles", Icons.Outlined.DirectionsCar),
+    DASHBOARD("dashboard", "Dashboard", Icons.Outlined.Speed),
+    RECORDS("records", "Records", Icons.Outlined.ReceiptLong),
+    REMINDERS("reminders", "Reminders", Icons.Outlined.Notifications),
+    SETTINGS("settings", "Settings", Icons.Outlined.Settings),
+    STATS("statistics", "Stats", Icons.Outlined.BarChart),
+    DATA("portability", "Data", Icons.Outlined.Storage),
+    TYPES("record-types", "Types", Icons.Outlined.Category),
 }
+
+internal fun initialAppRoute(hasVehicles: Boolean): String =
+    if (hasVehicles) Destination.DASHBOARD.route else Destination.VEHICLES.route
 
 @Composable
 fun OpenOdoApp(viewModel: AppViewModel) {
     val state by viewModel.state.collectAsState()
-    var destination by remember { mutableStateOf(Destination.DASHBOARD) }
-    var action by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    if (!state.isLoaded) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
+    }
+    val navController = rememberNavController()
+    val startRoute = initialAppRoute(state.vehicles.isNotEmpty())
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route ?: startRoute
     var lastBack by remember { mutableStateOf(0L) }
+    var previousEmpty by remember { mutableStateOf(state.vehicles.isEmpty()) }
 
-    BackHandler {
-        when (destination) {
-            Destination.STATS, Destination.DATA, Destination.TYPES -> destination = Destination.SETTINGS
-            Destination.DASHBOARD -> {
-                val now = System.currentTimeMillis()
-                if (now - lastBack < 2000) (context as? Activity)?.finish()
-                else { lastBack = now; Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show() }
+    LaunchedEffect(state.vehicles.isEmpty()) {
+        if (previousEmpty && state.vehicles.isNotEmpty() && currentRoute == Destination.VEHICLES.route) {
+            navController.navigate(Destination.DASHBOARD.route) {
+                popUpTo(Destination.VEHICLES.route) { inclusive = true }
             }
-            else -> destination = Destination.DASHBOARD
         }
-        action = null
+        previousEmpty = state.vehicles.isEmpty()
+    }
+
+    BackHandler(enabled = currentRoute == Destination.DASHBOARD.route || (currentRoute == Destination.VEHICLES.route && state.vehicles.isEmpty())) {
+        val now = System.currentTimeMillis()
+        if (now - lastBack < 2000) (context as? Activity)?.finish()
+        else { lastBack = now; Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show() }
     }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                listOf(
-                    Destination.VEHICLES,
-                    Destination.DASHBOARD,
-                    Destination.RECORDS,
-                    Destination.REMINDERS,
-                    Destination.SETTINGS,
-                ).forEach { item ->
-                    NavigationBarItem(
-                        selected = destination == item,
-                        onClick = { destination = item; action = null },
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                    )
+            val primary = listOf(Destination.VEHICLES, Destination.DASHBOARD, Destination.RECORDS, Destination.REMINDERS, Destination.SETTINGS)
+            if (primary.any { it.route == currentRoute }) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                    primary.forEach { item ->
+                        NavigationBarItem(
+                            selected = currentRoute == item.route,
+                            onClick = {
+                                if (item == Destination.DASHBOARD) navController.popBackStack(Destination.DASHBOARD.route, inclusive = false)
+                                else navController.navigate(item.route) { launchSingleTop = true }
+                            },
+                            icon = { Icon(item.icon, contentDescription = null) },
+                            label = { Text(item.label) },
+                        )
+                    }
                 }
             }
         },
     ) { padding ->
-        when (destination) {
-            Destination.VEHICLES -> VehiclesScreen(state, viewModel, Modifier.padding(padding))
-            Destination.DASHBOARD -> DashboardScreen(
-                state, viewModel, Modifier.padding(padding),
-                onFuel = { destination = Destination.RECORDS; action = "fuel" },
-                onExpense = { destination = Destination.RECORDS; action = "expense" },
-                onReminder = { destination = Destination.REMINDERS; action = "reminder" },
-            )
-            Destination.RECORDS -> RecordsScreen(state, viewModel, Modifier.padding(padding), action) { action = null }
-            Destination.REMINDERS -> RemindersScreen(state, viewModel, Modifier.padding(padding), action == "reminder") { action = null }
-            Destination.SETTINGS -> SettingsScreen(state, Modifier.padding(padding), { destination = Destination.STATS }, { destination = Destination.DATA }, { destination = Destination.TYPES })
-            Destination.STATS -> StatisticsScreen(state, viewModel, Modifier.padding(padding))
-            Destination.DATA -> PortabilityScreen(viewModel, Modifier.padding(padding))
-            Destination.TYPES -> RecordTypesScreen(viewModel, Modifier.padding(padding))
+        NavHost(navController, startDestination = startRoute, modifier = Modifier.padding(padding)) {
+            composable(Destination.VEHICLES.route) { VehiclesScreen(state, viewModel, Modifier) }
+            composable(Destination.DASHBOARD.route) {
+                DashboardScreen(state, viewModel, Modifier, { navController.navigate("fuel/new") }, { navController.navigate("expense/new") }, { navController.navigate("reminder/new") })
+            }
+            composable(Destination.RECORDS.route) { RecordsScreen(state, viewModel, Modifier, null) {} }
+            composable(Destination.REMINDERS.route) { RemindersScreen(state, viewModel, Modifier, false) {} }
+            composable(Destination.SETTINGS.route) { SettingsScreen(state, Modifier, { navController.navigate(Destination.STATS.route) }, { navController.navigate(Destination.DATA.route) }, { navController.navigate(Destination.TYPES.route) }) }
+            composable(Destination.STATS.route) { StatisticsScreen(state, viewModel, Modifier) }
+            composable(Destination.DATA.route) { PortabilityScreen(viewModel, Modifier) }
+            composable(Destination.TYPES.route) { RecordTypesScreen(viewModel, Modifier) }
+            composable("fuel/new") {
+                state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { vehicle ->
+                    FuelForm(vehicle, { viewModel.saveFuel(it); navController.popBackStack() }, { navController.popBackStack() }, Modifier)
+                }
+            }
+            composable("expense/new") {
+                state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { vehicle ->
+                    ExpenseForm(vehicle, viewModel, { viewModel.saveExpense(it); navController.popBackStack() }, { navController.popBackStack() }, Modifier)
+                }
+            }
+            composable("reminder/new") {
+                state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { vehicle ->
+                    ReminderForm(vehicle, viewModel, { viewModel.saveReminder(it); navController.popBackStack() }, { navController.popBackStack() }, Modifier)
+                }
+            }
         }
     }
 }
@@ -258,6 +286,23 @@ private fun FormTopBar(title: String, onClose: () -> Unit, onSave: () -> Unit) {
 }
 
 @Composable
+private fun rememberDiscardRequest(dirty: Boolean, discard: () -> Unit): () -> Unit {
+    var confirm by remember { mutableStateOf(false) }
+    val request: () -> Unit = { if (dirty) confirm = true else discard() }
+    BackHandler { request() }
+    if (confirm) {
+        AlertDialog(
+            onDismissRequest = { confirm = false },
+            title = { Text("Discard changes?") },
+            text = { Text("Your unsaved changes will be lost.") },
+            confirmButton = { TextButton(onClick = { confirm = false; discard() }) { Text("Discard", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text("Keep editing") } },
+        )
+    }
+    return request
+}
+
+@Composable
 private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
@@ -334,7 +379,6 @@ private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit
 
 @Composable
 private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: Vehicle? = null) {
-    BackHandler { cancel() }
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
     var make by remember(initial) { mutableStateOf(initial?.make ?: "") }
     var model by remember(initial) { mutableStateOf(initial?.model ?: "") }
@@ -342,6 +386,8 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
     var distance by remember(initial) { mutableStateOf(initial?.distanceUnit ?: DistanceUnit.KILOMETRES) }
     var volume by remember(initial) { mutableStateOf(initial?.volumeUnit ?: VolumeUnit.LITRES) }
     var energy by remember(initial) { mutableStateOf(initial?.energyUnit ?: EnergyUnit.KILOWATT_HOURS) }
+    val dirty = name != (initial?.name ?: "") || make != (initial?.make ?: "") || model != (initial?.model ?: "") || currency != (initial?.currency ?: "USD") || distance != (initial?.distanceUnit ?: DistanceUnit.KILOMETRES) || volume != (initial?.volumeUnit ?: VolumeUnit.LITRES) || energy != (initial?.energyUnit ?: EnergyUnit.KILOWATT_HOURS)
+    val requestCancel = rememberDiscardRequest(dirty, cancel)
 
     ScreenHeader(if (initial == null) "Add vehicle" else "Edit vehicle", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -361,7 +407,7 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
             item { TextField(currency, { currency = it.uppercase().take(3) }, Modifier.fillMaxWidth(), label = { Text("Currency (ISO code)") }, singleLine = true) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
+                    OutlinedButton(onClick = requestCancel, Modifier.weight(1f)) { Text("Cancel") }
                     Button(
                         onClick = {
                             save(Vehicle(
@@ -520,7 +566,6 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
 
 @Composable
 private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
-    BackHandler { cancel() }
     val locale = Locale.getDefault()
     var kind by remember(initial) { mutableStateOf(initial?.kind ?: FuelKind.LIQUID) }
     var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
@@ -535,6 +580,9 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     var missed by remember(initial) { mutableStateOf(initial?.missedPreviousFillUp ?: false) }
     var receipt by remember(initial) { mutableStateOf(initial?.receiptFileName) }
     var error by remember { mutableStateOf<String?>(null) }
+    val initialAmount = if (initial?.kind == FuelKind.ELECTRIC) initial.energy?.let { VehicleValueFormatter.formatEnergy(it, v.energyUnit, locale) } ?: "" else initial?.volume?.let { VehicleValueFormatter.formatVolume(it, v.volumeUnit, locale) } ?: ""
+    val dirty = kind != (initial?.kind ?: FuelKind.LIQUID) || date != (initial?.date?.toString() ?: LocalDate.now().toString()) || amount != initialAmount || unitPrice != (initial?.unitPrice?.let { VehicleValueFormatter.formatUnitPrice(it, locale) } ?: "") || cost != (initial?.totalCost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || label != (initial?.fuelLabel ?: "") || station != (initial?.stationName ?: "") || notes != (initial?.notes ?: "") || full != (initial?.fullTank ?: true) || missed != (initial?.missedPreviousFillUp ?: false) || receipt != initial?.receiptFileName
+    val requestCancel = rememberDiscardRequest(dirty, cancel)
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> receipt = uri?.toString() }
     val doSave: () -> Unit = {
         val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
@@ -551,7 +599,7 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     }
 
     Column(modifier.fillMaxSize()) {
-        FormTopBar("Add fuel", onClose = cancel, onSave = doSave)
+        FormTopBar(if (initial == null) "Add fuel" else "Edit fuel", onClose = requestCancel, onSave = doSave)
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -599,7 +647,6 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
 
 @Composable
 private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: ExpenseRecord? = null) {
-    BackHandler { cancel() }
     val locale = Locale.getDefault()
     var title by remember(initial) { mutableStateOf(initial?.title ?: "") }
     var cost by remember(initial) { mutableStateOf(initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") }
@@ -623,6 +670,8 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     LaunchedEffect(category) {
         if (typeInitialized && types.none { it.id == type && it.category == category }) type = categoryTypes.firstOrNull()?.id ?: 0
     }
+    val dirty = title != (initial?.title ?: "") || cost != (initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || performedBy != (initial?.performedBy ?: PerformedBy.SELF) || shop != (initial?.shopName ?: "")
+    val requestCancel = rememberDiscardRequest(dirty, cancel)
     val doSave: () -> Unit = {
         val parsedCost = VehicleValueFormatter.parseMoney(cost, v.currency, locale)
         val parsedOdometer = VehicleValueFormatter.parseDistance(odo, v.distanceUnit, locale)
@@ -635,7 +684,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     }
 
     Column(modifier.fillMaxSize()) {
-        FormTopBar("Add expense", onClose = cancel, onSave = doSave)
+        FormTopBar(if (initial == null) "Add expense" else "Edit expense", onClose = requestCancel, onSave = doSave)
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Category", style = MaterialTheme.typography.titleSmall) }
             item {
@@ -755,7 +804,6 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
 
 @Composable
 private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: Reminder? = null) {
-    BackHandler { cancel() }
     val locale = Locale.getDefault()
     val types = vm.recordTypes().collectAsState(initial = emptyList()).value.filter { it.category == RecordCategory.SERVICE }
     var type by remember(initial?.id) { mutableStateOf(initial?.typeId ?: 0) }
@@ -769,6 +817,8 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
             typeInitialized = true
         }
     }
+    val dirty = type != (initial?.typeId ?: 0) || months != (initial?.intervalMonths?.toString() ?: "") || distance != (initial?.intervalDistance?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "")
+    val requestCancel = rememberDiscardRequest(dirty, cancel)
 
     ScreenHeader(if (initial == null) "Add reminder" else "Edit reminder", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -779,7 +829,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
+                    OutlinedButton(onClick = requestCancel, Modifier.weight(1f)) { Text("Cancel") }
                     Button(onClick = {
                         val m = months.toIntOrNull()
                         val d = distance.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseDistance(it, v.distanceUnit, locale) }

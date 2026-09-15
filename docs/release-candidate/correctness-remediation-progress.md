@@ -23,3 +23,14 @@ Completed:
 - Transactional permanent vehicle cascade deletion with UI confirmation.
 - Fuel/expense delete confirmations describe consequences.
 - Active vehicle fallback after deletion.
+
+Navigation/state phase:
+
+- Replaced the flat destination switch with a saved Compose Navigation
+  NavHost for primary tabs, secondary screens, and add forms.
+- Empty installs start at Vehicles setup; first vehicle creation replaces the
+  setup route with Dashboard.
+- Back pops exact route history; Dashboard and empty setup use double-back to
+  exit.
+- Forms intercept Back/Cancel and confirm before discarding dirty input.
+- Bottom navigation is hidden while full-screen forms are open.
