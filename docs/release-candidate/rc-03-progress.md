@@ -10,11 +10,8 @@ Completed in this increment:
 
 Remaining before RC-3 can be closed:
 
-- Full edit flows rather than delete-only record cards.
-- Android document-picker URI capture replacing the current local receipt
-  marker in all forms.
-- Complete statistics visualization/data wiring.
-- Screenshot/accessibility review against the Sleek export.
+- On-device screenshot/accessibility review against the Sleek export at large
+  text, narrow-screen, landscape, light-theme, and dark-theme configurations.
 
 2026-09-13 additions:
 - Vehicle edit form now includes distance, volume, energy, and currency
@@ -22,6 +19,23 @@ Remaining before RC-3 can be closed:
 - Receipt "View" action on fuel and expense cards (local ACTION_VIEW, no
   upload).
 - Import preview now shows per-row report detail (row + code).
+
+2026-09-15 additions:
+- Unified, month-grouped History timeline for fuel and expense records with
+  category filters, expandable details, and edit/delete actions.
+- Fuel and expense forms now provide complete edit flows, including expense
+  date, description, warranty, notes, and receipt fields.
+- Fuel and expense receipt selection uses Android's document picker and retains
+  read permission; attached receipts remain viewable from History.
+- Statistics period and liquid/electric filters now affect calculations and
+  include L/100 km, km/L, US/UK MPG, kWh/100 km, mi/kWh, cost per distance,
+  best/worst spans, exclusion explanations, monthly cost/volume/energy, and
+  unit-price summaries.
+- Monthly charts include explicit units and a textual data alternative.
+- Static accessibility review found no unlabeled icon-only actions in the new
+  surfaces; decorative icons inside labeled controls are hidden from semantics.
+- Offline `:core:test`, `:app:testDebugUnitTest`, and `:app:assembleRelease`
+  gate passes.
 
 Reproducibility proof:
 - Two clean `assembleRelease` runs produce byte-identical APKs.
