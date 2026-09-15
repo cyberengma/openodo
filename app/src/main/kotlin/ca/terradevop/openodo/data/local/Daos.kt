@@ -30,6 +30,9 @@ interface VehicleDao {
 
     @Delete
     suspend fun delete(vehicle: VehicleEntity)
+
+    @Query("DELETE FROM vehicles")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -45,6 +48,9 @@ interface RecordTypeDao {
 
     @Update
     suspend fun update(type: RecordTypeEntity)
+
+    @Query("DELETE FROM record_types")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -63,6 +69,12 @@ interface FuelEntryDao {
 
     @Delete
     suspend fun delete(entry: FuelEntryEntity)
+
+    @Query("DELETE FROM fuel_entries WHERE vehicleId = :vehicleId")
+    suspend fun deleteForVehicle(vehicleId: Long)
+
+    @Query("DELETE FROM fuel_entries")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -84,6 +96,12 @@ interface ExpenseRecordDao {
 
     @Delete
     suspend fun delete(record: ExpenseRecordEntity)
+
+    @Query("DELETE FROM expense_records WHERE vehicleId = :vehicleId")
+    suspend fun deleteForVehicle(vehicleId: Long)
+
+    @Query("DELETE FROM expense_records")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -93,6 +111,9 @@ interface ReminderDao {
 
     @Query("SELECT * FROM reminders WHERE vehicleId = :vehicleId AND active = 1 ORDER BY id")
     fun observeActiveForVehicle(vehicleId: Long): Flow<List<ReminderEntity>>
+
+    @Query("SELECT * FROM reminders WHERE vehicleId = :vehicleId ORDER BY id")
+    suspend fun findForVehicle(vehicleId: Long): List<ReminderEntity>
 
     @Query("SELECT * FROM reminders WHERE id = :id")
     suspend fun findById(id: Long): ReminderEntity?
@@ -105,4 +126,10 @@ interface ReminderDao {
 
     @Delete
     suspend fun delete(reminder: ReminderEntity)
+
+    @Query("DELETE FROM reminders WHERE vehicleId = :vehicleId")
+    suspend fun deleteForVehicle(vehicleId: Long)
+
+    @Query("DELETE FROM reminders")
+    suspend fun deleteAll()
 }

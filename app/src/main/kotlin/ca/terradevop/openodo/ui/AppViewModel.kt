@@ -15,6 +15,7 @@ import ca.terradevop.openodo.data.FuelEntryRepository
 import ca.terradevop.openodo.data.ReminderRepository
 import ca.terradevop.openodo.data.RecordTypeRepository
 import ca.terradevop.openodo.data.VehicleRepository
+import ca.terradevop.openodo.data.DomainTransactionCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,7 @@ class AppViewModel @Inject constructor(
     private val expenses: ExpenseRecordRepository,
     private val reminders: ReminderRepository,
     private val recordTypes: RecordTypeRepository,
+    private val transactions: DomainTransactionCoordinator,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     init {
@@ -58,7 +60,8 @@ class AppViewModel @Inject constructor(
     }
     private val selected = MutableStateFlow<Long?>(context.getSharedPreferences("openodo", Context.MODE_PRIVATE).getLong("active_vehicle_id", 0L).takeIf { it != 0L })
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
-        ShellState(active, archived, selectedId ?: active.firstOrNull()?.id)
+        val effectiveId = selectedId?.takeIf { id -> active.any { it.id == id } } ?: active.firstOrNull()?.id
+        ShellState(active, archived, effectiveId)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     fun select(id: Long) {
@@ -85,20 +88,21 @@ class AppViewModel @Inject constructor(
     }
 
     fun saveExpense(record: ExpenseRecord) {
-        viewModelScope.launch {
-            expenses.save(record)
-            reminders.observeForVehicle(record.vehicleId).first()
-                .let { ResetResolver.onRecordLogged(it, record) }
-                .forEach { reminders.save(it) }
-        }
+        viewModelScope.launch { transactions.saveExpense(record) }
     }
 
     fun deleteExpense(record: ExpenseRecord) {
-        viewModelScope.launch { expenses.delete(record) }
+        viewModelScope.launch { transactions.deleteExpense(record) }
     }
 
     fun deleteVehicle(vehicle: Vehicle) {
-        viewModelScope.launch { vehicles.delete(vehicle) }
+        viewModelScope.launch {
+            transactions.deleteVehicle(vehicle)
+            if (selected.value == vehicle.id) {
+                selected.value = null
+                context.getSharedPreferences("openodo", Context.MODE_PRIVATE).edit().remove("active_vehicle_id").apply()
+            }
+        }
     }
 
     fun reminders(vehicleId: Long) = reminders.observeForVehicle(vehicleId)
@@ -134,21 +138,15 @@ class AppViewModel @Inject constructor(
 
     fun applyImport(result: ImportResult) {
         viewModelScope.launch {
-            val newVehicleId = result.domain.vehicles.firstOrNull()?.let { vehicles.save(it.copy(id = 0)) }
-            val typeIdMap = mutableMapOf<Long, Long>()
-            result.domain.recordTypes.forEach { rt -> typeIdMap[rt.id] = recordTypes.save(rt.copy(id = 0)) }
-            result.domain.fuelEntries.forEach { fuels.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId)) }
-            result.domain.expenseRecords.forEach { expenses.save(it.copy(id = 0, vehicleId = newVehicleId ?: it.vehicleId, typeId = typeIdMap[it.typeId] ?: it.typeId)) }
+            val id = transactions.applyImport(result)
+            select(id)
         }
     }
 
     suspend fun restoreJson(source: String): Result<Unit> = runCatching {
         val domain = BackupV1.read(source).getOrThrow()
-        domain.vehicles.forEach { vehicles.save(it) }
-        domain.recordTypes.forEach { recordTypes.save(it) }
-        domain.fuelEntries.forEach { fuels.save(it) }
-        domain.expenseRecords.forEach { expenses.save(it) }
-        domain.reminders.forEach { reminders.save(it) }
+        transactions.replaceAll(domain)
+        domain.vehicles.firstOrNull { !it.isArchived }?.let { select(it.id) }
     }
 
     private suspend fun exportDomain(write: (PortabilityDomain, StringWriter) -> Unit): String {

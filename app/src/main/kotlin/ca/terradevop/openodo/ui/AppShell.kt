@@ -272,6 +272,7 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
 private fun VehiclesScreen(state: ShellState, viewModel: AppViewModel, modifier: Modifier) {
     var form by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Vehicle?>(null) }
+    var deleteCandidate by remember { mutableStateOf<Vehicle?>(null) }
     if (form || editing != null) {
         VehicleForm({ viewModel.save(it); form = false; editing = null }, { form = false; editing = null }, modifier, editing)
         return
@@ -284,18 +285,27 @@ private fun VehiclesScreen(state: ShellState, viewModel: AppViewModel, modifier:
                 item { EmptyState("Your garage is empty", "Add your first vehicle to start a private, offline log.", "Add vehicle") { form = true } }
             }
             items(state.vehicles, key = { it.id }) { v ->
-                VehicleCard(v, state.activeVehicleId == v.id, { viewModel.select(v.id) }, { editing = v })
+                VehicleCard(v, state.activeVehicleId == v.id, { viewModel.select(v.id) }, { editing = v }, { deleteCandidate = v })
             }
             if (state.archivedVehicles.isNotEmpty()) {
                 item { Text("Archived", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-                items(state.archivedVehicles, key = { it.id }) { VehicleCard(it, false, {}, { editing = it }) }
+                items(state.archivedVehicles, key = { it.id }) { VehicleCard(it, false, {}, { editing = it }, { deleteCandidate = it }) }
             }
         }
+    }
+    deleteCandidate?.let { vehicle ->
+        AlertDialog(
+            onDismissRequest = { deleteCandidate = null },
+            title = { Text("Permanently delete ${vehicle.name}?") },
+            text = { Text("This permanently deletes the vehicle, its fuel entries, expense records, and reminders. This cannot be undone.") },
+            confirmButton = { TextButton(onClick = { viewModel.deleteVehicle(vehicle); deleteCandidate = null }) { Text("Delete permanently", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { deleteCandidate = null }) { Text("Cancel") } },
+        )
     }
 }
 
 @Composable
-private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit: () -> Unit) {
+private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
     Card(
         onClick = onClick,
         Modifier.fillMaxWidth(),
@@ -314,7 +324,10 @@ private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit
                 ConfigPill(energyLabel(v.energyUnit))
                 ConfigPill(v.currency)
             }
-            TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
+            Row {
+                TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
+                TextButton(onClick = onDelete) { Icon(Icons.Outlined.Delete, contentDescription = "Delete", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error); Spacer(Modifier.width(4.dp)); Text("Delete", color = MaterialTheme.colorScheme.error) }
+            }
         }
     }
 }
@@ -446,6 +459,8 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
     var addExpense by remember { mutableStateOf(action == "expense") }
     var editingFuel by remember { mutableStateOf<FuelEntry?>(null) }
     var editingExpense by remember { mutableStateOf<ExpenseRecord?>(null) }
+    var deletingFuel by remember { mutableStateOf<FuelEntry?>(null) }
+    var deletingExpense by remember { mutableStateOf<ExpenseRecord?>(null) }
     LaunchedEffect(action) {
         when (action) {
             "fuel" -> { addFuel = true; clear() }
@@ -476,12 +491,30 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
             }
             if (mode == 0) {
                 if (fuels.isNullOrEmpty()) EmptyState("No fuel history", "Log fuel or charging to see it here.", "Add fuel") { addFuel = true }
-                else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(fuels, key = { it.id }) { FuelCard(it, { vm.deleteFuel(it) }, { editingFuel = it }) } }
+                else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(fuels, key = { it.id }) { FuelCard(it, { deletingFuel = it }, { editingFuel = it }) } }
             } else {
                 if (expenses.isNullOrEmpty()) EmptyState("No expenses", "Log service, repair, upgrade, or other work.", "Add expense") { addExpense = true }
-                else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(expenses, key = { it.id }) { ExpenseCard(it, { vm.deleteExpense(it) }, { editingExpense = it }) } }
+                else LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) { items(expenses, key = { it.id }) { ExpenseCard(it, { deletingExpense = it }, { editingExpense = it }) } }
             }
         }
+    }
+    deletingFuel?.let { entry ->
+        AlertDialog(
+            onDismissRequest = { deletingFuel = null },
+            title = { Text("Delete fuel entry?") },
+            text = { Text("Delete ${entry.fuelLabel} from ${entry.date}? This cannot be undone.") },
+            confirmButton = { TextButton(onClick = { vm.deleteFuel(entry); deletingFuel = null }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { deletingFuel = null }) { Text("Cancel") } },
+        )
+    }
+    deletingExpense?.let { record ->
+        AlertDialog(
+            onDismissRequest = { deletingExpense = null },
+            title = { Text("Delete expense record?") },
+            text = { Text("Delete ${record.title}? Matching reminders will be re-anchored to the newest remaining record, or become unanchored. This cannot be undone.") },
+            confirmButton = { TextButton(onClick = { vm.deleteExpense(record); deletingExpense = null }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { deletingExpense = null }) { Text("Cancel") } },
+        )
     }
 }
 
