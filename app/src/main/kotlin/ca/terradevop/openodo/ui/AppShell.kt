@@ -42,9 +42,12 @@ import ca.terradevop.openodo.core.reminders.DueCalculator
 import ca.terradevop.openodo.core.reminders.ReminderState
 import ca.terradevop.openodo.core.reminders.ReminderStatus
 import ca.terradevop.openodo.core.units.*
+import ca.terradevop.openodo.core.validation.ValidationResult
+import ca.terradevop.openodo.core.validation.Validators
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.util.Locale
 
 private enum class Destination(val label: String, val icon: ImageVector) {
     VEHICLES("Vehicles", Icons.Outlined.DirectionsCar),
@@ -306,9 +309,9 @@ private fun VehicleCard(v: Vehicle, active: Boolean, onClick: () -> Unit, onEdit
             }
             Text("${v.make} ${v.model} • ${v.year}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                ConfigPill(v.distanceUnit.name)
-                ConfigPill(v.volumeUnit.name)
-                ConfigPill(v.energyUnit.name)
+                ConfigPill(distanceLabel(v.distanceUnit))
+                ConfigPill(volumeLabel(v.volumeUnit))
+                ConfigPill(energyLabel(v.energyUnit))
                 ConfigPill(v.currency)
             }
             TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
@@ -403,8 +406,8 @@ private fun HeroCard(v: Vehicle) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("CURRENT READING", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontWeight = FontWeight.Bold)
-            Text(v.manualOdometer?.value?.toString() ?: "—", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-            Text(v.distanceUnit.name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
+            Text(v.manualOdometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, Locale.getDefault()) } ?: "—", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            Text(distanceLabel(v.distanceUnit), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
         }
     }
 }
@@ -485,12 +488,13 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
 @Composable
 private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
     BackHandler { cancel() }
+    val locale = Locale.getDefault()
     var kind by remember(initial) { mutableStateOf(initial?.kind ?: FuelKind.LIQUID) }
     var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
-    var amount by remember(initial) { mutableStateOf((if (initial?.kind == FuelKind.ELECTRIC) initial?.energy?.value else initial?.volume?.value)?.div(1000)?.toString() ?: "") }
-    var unitPrice by remember(initial) { mutableStateOf(initial?.unitPrice?.milli?.div(1000)?.toString() ?: "") }
-    var cost by remember(initial) { mutableStateOf(initial?.totalCost?.minor?.div(100)?.toString() ?: "") }
-    var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
+    var amount by remember(initial, v.volumeUnit, v.energyUnit) { mutableStateOf(if (initial?.kind == FuelKind.ELECTRIC) initial.energy?.let { VehicleValueFormatter.formatEnergy(it, v.energyUnit, locale) } ?: "" else initial?.volume?.let { VehicleValueFormatter.formatVolume(it, v.volumeUnit, locale) } ?: "") }
+    var unitPrice by remember(initial) { mutableStateOf(initial?.unitPrice?.let { VehicleValueFormatter.formatUnitPrice(it, locale) } ?: "") }
+    var cost by remember(initial) { mutableStateOf(initial?.totalCost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") }
+    var odo by remember(initial, v.distanceUnit) { mutableStateOf(initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") }
     var label by remember(initial) { mutableStateOf(initial?.fuelLabel ?: "") }
     var station by remember(initial) { mutableStateOf(initial?.stationName ?: "") }
     var notes by remember(initial) { mutableStateOf(initial?.notes ?: "") }
@@ -500,11 +504,16 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     var error by remember { mutableStateOf<String?>(null) }
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> receipt = uri?.toString() }
     val doSave: () -> Unit = {
-        val a = amount.toLongOrNull(); val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-        if (a == null || a <= 0 || c == null || c < 0 || o == null || o < 0) error = "Odometer, positive measurement, and non-negative cost are required"
-        else {
-            val up = unitPrice.toLongOrNull()?.let { ca.terradevop.openodo.core.money.UnitPrice(it * 1000, v.currency) }
-            save(FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = runCatching { LocalDate.parse(date) }.getOrDefault(LocalDate.now()), odometer = Metres(o * 1_000), kind = kind, volume = if (kind == FuelKind.LIQUID) Millilitres(a * 1_000) else null, energy = if (kind == FuelKind.ELECTRIC) WattHours(a * 1_000) else null, unitPrice = up, totalCost = Money(c * 100, v.currency), fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+        val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
+        val parsedOdometer = VehicleValueFormatter.parseDistance(odo, v.distanceUnit, locale)
+        val parsedMoney = VehicleValueFormatter.parseMoney(cost, v.currency, locale)
+        val parsedVolume = if (kind == FuelKind.LIQUID) VehicleValueFormatter.parseVolume(amount, v.volumeUnit, locale) else null
+        val parsedEnergy = if (kind == FuelKind.ELECTRIC) VehicleValueFormatter.parseEnergy(amount, v.energyUnit, locale) else null
+        val candidate = if (parsedDate != null && parsedOdometer != null && parsedMoney != null && (parsedVolume != null || parsedEnergy != null)) FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = parsedDate, odometer = parsedOdometer, kind = kind, volume = parsedVolume, energy = parsedEnergy, unitPrice = unitPrice.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseUnitPrice(it, v.currency, locale) }, totalCost = parsedMoney, fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
+        when (val validation = candidate?.let { Validators.fuelEntry(it, Clock.systemDefaultZone()) }) {
+            null -> error = "Use a valid date, odometer, decimal measurement, cost, and optional unit price"
+            is ValidationResult.Error -> error = validation.message
+            else -> save(candidate)
         }
     }
 
@@ -522,16 +531,16 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TextField(date, { date = it }, Modifier.weight(1f), label = { Text("Date") }, singleLine = true)
                     }
-                    TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
                 }
             }
             item {
                 SectionCard {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        TextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${v.volumeUnit.name})" else "Energy (${v.energyUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                        TextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                        TextField(amount, { amount = it }, Modifier.weight(1f), label = { Text(if (kind == FuelKind.LIQUID) "Volume (${volumeLabel(v.volumeUnit)})" else "Energy (${energyLabel(v.energyUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
+                        TextField(unitPrice, { unitPrice = it }, Modifier.weight(1f), label = { Text("Unit price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
                     }
-                    TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                    TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Total cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(full, { full = it }); Text(if (kind == FuelKind.LIQUID) "Full tank" else "Full charge") }
                         Row(verticalAlignment = Alignment.CenterVertically) { Checkbox(missed, { missed = it }); Text("Missed fill-up") }
@@ -558,21 +567,38 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
 @Composable
 private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: ExpenseRecord? = null) {
     BackHandler { cancel() }
+    val locale = Locale.getDefault()
     var title by remember(initial) { mutableStateOf(initial?.title ?: "") }
-    var cost by remember(initial) { mutableStateOf(initial?.cost?.minor?.div(100)?.toString() ?: "") }
-    var odo by remember(initial) { mutableStateOf(initial?.odometer?.value?.div(1000)?.toString() ?: "") }
+    var cost by remember(initial) { mutableStateOf(initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") }
+    var odo by remember(initial, v.distanceUnit) { mutableStateOf(initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") }
     val types = vm.recordTypes().collectAsState(initial = emptyList()).value
-    var category by remember(initial) { mutableStateOf(initial?.typeId?.let { id -> types.firstOrNull { it.id == id }?.category } ?: RecordCategory.SERVICE) }
+    var category by remember(initial?.id) { mutableStateOf(RecordCategory.SERVICE) }
     var type by remember(initial) { mutableStateOf(initial?.typeId ?: 0) }
+    var typeInitialized by remember(initial?.id) { mutableStateOf(false) }
     var performedBy by remember(initial) { mutableStateOf(initial?.performedBy ?: PerformedBy.SELF) }
     var shop by remember(initial) { mutableStateOf(initial?.shopName ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
     val categoryTypes = types.filter { it.category == category }
-    LaunchedEffect(category) { type = categoryTypes.firstOrNull()?.id ?: 0 }
+    LaunchedEffect(types, initial?.id) {
+        if (!typeInitialized && types.isNotEmpty()) {
+            val existing = initial?.let { record -> types.firstOrNull { it.id == record.typeId } }
+            category = existing?.category ?: RecordCategory.SERVICE
+            type = existing?.id ?: types.firstOrNull { it.category == category }?.id ?: 0
+            typeInitialized = true
+        }
+    }
+    LaunchedEffect(category) {
+        if (typeInitialized && types.none { it.id == type && it.category == category }) type = categoryTypes.firstOrNull()?.id ?: 0
+    }
     val doSave: () -> Unit = {
-        val c = cost.toLongOrNull(); val o = odo.toLongOrNull()
-        if (type == 0L || title.isBlank() || c == null || c < 0 || o == null || o < 0) error = "Choose a type and enter title, odometer, and non-negative cost"
-        else save(ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = Metres(o * 1_000), title = title, description = null, cost = Money(c * 100, v.currency), performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = null, receiptFileName = null, notes = null, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+        val parsedCost = VehicleValueFormatter.parseMoney(cost, v.currency, locale)
+        val parsedOdometer = VehicleValueFormatter.parseDistance(odo, v.distanceUnit, locale)
+        val candidate = if (type != 0L && title.isNotBlank() && parsedCost != null && parsedOdometer != null) ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = initial?.date ?: LocalDate.now(), odometer = parsedOdometer, title = title, description = initial?.description, cost = parsedCost, performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = initial?.warrantyUntil, receiptFileName = initial?.receiptFileName, notes = initial?.notes, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
+        when (val validation = candidate?.let(Validators::expenseRecord)) {
+            null -> error = "Choose a type and enter a title, odometer, and valid cost"
+            is ValidationResult.Error -> error = validation.message
+            else -> save(candidate)
+        }
     }
 
     Column(modifier.fillMaxSize()) {
@@ -589,8 +615,8 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
             item { Text("Record type", style = MaterialTheme.typography.titleSmall) }
             item { RecordTypeDropdown(categoryTypes, type) { type = it } }
             item { TextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
-            item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true) }
+            item { TextField(cost, { cost = it }, Modifier.fillMaxWidth(), label = { Text("Cost (${v.currency})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true) }
             item { Text("Performed by", style = MaterialTheme.typography.titleSmall) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -697,23 +723,38 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
 @Composable
 private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: Reminder? = null) {
     BackHandler { cancel() }
+    val locale = Locale.getDefault()
     val types = vm.recordTypes().collectAsState(initial = emptyList()).value.filter { it.category == RecordCategory.SERVICE }
-    var type by remember(initial) { mutableStateOf(initial?.typeId ?: types.firstOrNull()?.id ?: 0) }
+    var type by remember(initial?.id) { mutableStateOf(initial?.typeId ?: 0) }
+    var typeInitialized by remember(initial?.id) { mutableStateOf(false) }
     var months by remember(initial) { mutableStateOf(initial?.intervalMonths?.toString() ?: "") }
-    var distance by remember(initial) { mutableStateOf(initial?.intervalDistance?.value?.div(1000)?.toString() ?: "") }
+    var distance by remember(initial, v.distanceUnit) { mutableStateOf(initial?.intervalDistance?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") }
+    var error by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(types, initial?.id) {
+        if (!typeInitialized && types.isNotEmpty()) {
+            type = initial?.typeId?.takeIf { id -> types.any { it.id == id } } ?: types.first().id
+            typeInitialized = true
+        }
+    }
 
     ScreenHeader(if (initial == null) "Add reminder" else "Edit reminder", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Service type", style = MaterialTheme.typography.titleSmall) }
             item { RecordTypeDropdown(types, type) { type = it } }
             item { TextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
-            item { TextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${v.distanceUnit.name})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
+            item { TextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true) }
+            error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = cancel, Modifier.weight(1f)) { Text("Cancel") }
                     Button(onClick = {
-                        val m = months.toIntOrNull(); val d = distance.toLongOrNull()
-                        save(Reminder(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, intervalDistance = d?.let { Metres(it * 1000) }, intervalMonths = m, anchorDate = initial?.anchorDate, anchorOdometer = initial?.anchorOdometer, active = initial?.active ?: true))
+                        val m = months.toIntOrNull()
+                        val d = distance.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseDistance(it, v.distanceUnit, locale) }
+                        val candidate = Reminder(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, intervalDistance = d, intervalMonths = m, anchorDate = initial?.anchorDate, anchorOdometer = initial?.anchorOdometer, active = initial?.active ?: true)
+                        when (val validation = Validators.reminder(candidate)) {
+                            is ValidationResult.Error -> error = validation.message
+                            else -> if (type == 0L) error = "Choose a service type" else save(candidate)
+                        }
                     }, Modifier.weight(1f)) { Text("Save") }
                 }
             }
@@ -726,8 +767,9 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
     val overdue = s.state == ReminderState.OVERDUE
     val dueSoon = s.state == ReminderState.DUE_SOON
     val accent = when { overdue -> MaterialTheme.colorScheme.error; dueSoon -> MaterialTheme.colorScheme.tertiary; else -> MaterialTheme.colorScheme.primary }
+    val locale = Locale.getDefault()
     val intervalParts = buildList {
-        r.intervalDistance?.let { add("${it.value / 1000} km") }
+        r.intervalDistance?.let { add("${VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)}") }
         r.intervalMonths?.let { add("$it mo") }
     }
     val intervalText = if (intervalParts.isEmpty()) "No interval" else "Every ${intervalParts.joinToString(" or ")}"
@@ -738,9 +780,9 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
     val intervalDistance = r.intervalDistance
     val remaining = when {
         remainingDays != null && remainingDays < 0 -> "${-remainingDays} days past due"
-        remainingDistance != null && remainingDistance.value < 0 -> "${-remainingDistance.value / 1000} km past due"
+        remainingDistance != null && remainingDistance.value < 0 -> "${VehicleValueFormatter.formatDistance(Metres(-remainingDistance.value), v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)} past due"
         remainingDays != null -> "$remainingDays days left"
-        remainingDistance != null -> "${remainingDistance.value / 1000} km left"
+        remainingDistance != null -> "${VehicleValueFormatter.formatDistance(remainingDistance, v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)} left"
         else -> null
     }
     Card(
@@ -755,7 +797,7 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
             }
             Text(intervalText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (nextDueDate != null) Text("Due $nextDueDate", style = MaterialTheme.typography.bodySmall, color = accent)
-            if (nextDueOdometer != null) Text("Due at ${nextDueOdometer.value / 1000} km", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (nextDueOdometer != null) Text("Due at ${VehicleValueFormatter.formatDistance(nextDueOdometer, v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             remaining?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = accent, fontWeight = FontWeight.SemiBold) }
             if (dueSoon && remainingDistance != null && intervalDistance != null) {
                 val progress = (remainingDistance.value.toFloat() / intervalDistance.value.toFloat()).coerceIn(0f, 1f)
@@ -925,6 +967,12 @@ private fun distanceLabel(u: DistanceUnit) = when (u) {
     DistanceUnit.METRES -> "Metres (m)"
     DistanceUnit.KILOMETRES -> "Kilometres (km)"
     DistanceUnit.MILES -> "Miles (mi)"
+}
+
+private fun distanceSymbol(u: DistanceUnit) = when (u) {
+    DistanceUnit.METRES -> "m"
+    DistanceUnit.KILOMETRES -> "km"
+    DistanceUnit.MILES -> "mi"
 }
 
 private fun volumeLabel(u: VolumeUnit) = when (u) {
