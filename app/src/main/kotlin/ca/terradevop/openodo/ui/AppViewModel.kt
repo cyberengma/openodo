@@ -42,6 +42,12 @@ data class ShellState(
     val isLoaded: Boolean = false,
 )
 
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
+}
+
 @HiltViewModel
 class AppViewModel @Inject constructor(
     private val vehicles: VehicleRepository,
@@ -52,6 +58,8 @@ class AppViewModel @Inject constructor(
     private val transactions: DomainTransactionCoordinator,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+    private val preferences = context.getSharedPreferences("openodo", Context.MODE_PRIVATE)
+
     init {
         viewModelScope.launch {
             if (recordTypes.observeAll().first().isEmpty()) {
@@ -59,7 +67,12 @@ class AppViewModel @Inject constructor(
             }
         }
     }
-    private val selected = MutableStateFlow<Long?>(context.getSharedPreferences("openodo", Context.MODE_PRIVATE).getLong("active_vehicle_id", 0L).takeIf { it != 0L })
+    private val selected = MutableStateFlow<Long?>(preferences.getLong("active_vehicle_id", 0L).takeIf { it != 0L })
+    private val selectedTheme = MutableStateFlow(
+        runCatching { ThemeMode.valueOf(preferences.getString("theme_mode", ThemeMode.SYSTEM.name)!!) }
+            .getOrDefault(ThemeMode.SYSTEM),
+    )
+    val themeMode: StateFlow<ThemeMode> = selectedTheme
     val state: StateFlow<ShellState> = combine(vehicles.observeActive(), vehicles.observeArchived(), selected) { active, archived, selectedId ->
         val effectiveId = selectedId?.takeIf { id -> active.any { it.id == id } } ?: active.firstOrNull()?.id
         ShellState(active, archived, effectiveId, isLoaded = true)
@@ -67,7 +80,12 @@ class AppViewModel @Inject constructor(
 
     fun select(id: Long) {
         selected.value = id
-        context.getSharedPreferences("openodo", Context.MODE_PRIVATE).edit().putLong("active_vehicle_id", id).apply()
+        preferences.edit().putLong("active_vehicle_id", id).apply()
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        selectedTheme.value = mode
+        preferences.edit().putString("theme_mode", mode.name).apply()
     }
 
     fun save(vehicle: Vehicle) {
@@ -101,7 +119,7 @@ class AppViewModel @Inject constructor(
             transactions.deleteVehicle(vehicle)
             if (selected.value == vehicle.id) {
                 selected.value = null
-                context.getSharedPreferences("openodo", Context.MODE_PRIVATE).edit().remove("active_vehicle_id").apply()
+                preferences.edit().remove("active_vehicle_id").apply()
             }
         }
     }

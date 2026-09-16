@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@file:OptIn(
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+)
 
 package ca.terradevop.openodo.ui
 
@@ -52,8 +55,10 @@ import ca.terradevop.openodo.core.validation.ValidationResult
 import ca.terradevop.openodo.core.validation.Validators
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 import java.util.Locale
 
 private enum class Destination(val route: String, val label: String, val icon: ImageVector) {
@@ -128,13 +133,13 @@ fun OpenOdoApp(viewModel: AppViewModel) {
             }
             composable(Destination.RECORDS.route) { RecordsScreen(state, viewModel, Modifier, null) {} }
             composable(Destination.REMINDERS.route) { RemindersScreen(state, viewModel, Modifier, false) {} }
-            composable(Destination.SETTINGS.route) { SettingsScreen(state, Modifier, { navController.navigate(Destination.STATS.route) }, { navController.navigate(Destination.DATA.route) }, { navController.navigate(Destination.TYPES.route) }) }
+            composable(Destination.SETTINGS.route) { SettingsScreen(state, viewModel, Modifier, { navController.navigate(Destination.STATS.route) }, { navController.navigate(Destination.DATA.route) }, { navController.navigate(Destination.TYPES.route) }) }
             composable(Destination.STATS.route) { StatisticsScreen(state, viewModel, Modifier) }
             composable(Destination.DATA.route) { PortabilityScreen(viewModel, Modifier) }
             composable(Destination.TYPES.route) { RecordTypesScreen(viewModel, Modifier) }
             composable("fuel/new") {
                 state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.let { vehicle ->
-                    FuelForm(vehicle, { viewModel.saveFuel(it); navController.popBackStack() }, { navController.popBackStack() }, Modifier)
+                    FuelForm(vehicle, viewModel, { viewModel.saveFuel(it); navController.popBackStack() }, { navController.popBackStack() }, Modifier)
                 }
             }
             composable("expense/new") {
@@ -548,7 +553,7 @@ private fun RecordsScreen(state: ShellState, vm: AppViewModel, modifier: Modifie
     }
 
     if (v != null && (addFuel || editingFuel != null)) {
-        FuelForm(v, { vm.saveFuel(it); addFuel = false; editingFuel = null }, { addFuel = false; editingFuel = null }, modifier, editingFuel)
+        FuelForm(v, vm, { vm.saveFuel(it); addFuel = false; editingFuel = null }, { addFuel = false; editingFuel = null }, modifier, editingFuel)
         return
     }
     if (v != null && (addExpense || editingExpense != null)) {
@@ -756,11 +761,111 @@ private fun RecentFuelRow(f: FuelEntry, v: Vehicle) {
 }
 
 @Composable
-private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
+private fun DateField(
+    value: LocalDate?,
+    label: String,
+    onSelect: (LocalDate?) -> Unit,
+    modifier: Modifier = Modifier,
+    allowClear: Boolean = false,
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    Box(modifier) {
+        TextField(
+            value = value?.toString().orEmpty(),
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
+            singleLine = true,
+        )
+        Box(Modifier.matchParentSize().clickable { showPicker = true })
+    }
+    if (showPicker) {
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = value?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let { millis ->
+                            onSelect(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                        }
+                        showPicker = false
+                    },
+                    enabled = pickerState.selectedDateMillis != null,
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                Row {
+                    if (allowClear && value != null) TextButton(onClick = { onSelect(null); showPicker = false }) { Text("Clear") }
+                    TextButton(onClick = { showPicker = false }) { Text("Cancel") }
+                }
+            },
+        ) { DatePicker(state = pickerState) }
+    }
+}
+
+@Composable
+private fun SuggestionField(
+    value: String,
+    label: String,
+    suggestions: List<String>,
+    placeholder: String,
+    onSelect: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var adding by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf("") }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box {
+            TextField(
+                value = value,
+                onValueChange = {},
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true,
+                label = { Text(label) },
+                placeholder = { Text(placeholder) },
+                trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+                singleLine = true,
+            )
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                suggestions.forEach { option ->
+                    DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); expanded = false })
+                }
+                if (value.isNotBlank()) DropdownMenuItem(text = { Text("Clear selection") }, onClick = { onSelect(""); expanded = false })
+                DropdownMenuItem(
+                    text = { Text("Quick add") },
+                    leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    onClick = { draft = ""; adding = true; expanded = false },
+                )
+            }
+            Box(Modifier.matchParentSize().clickable { expanded = true })
+        }
+        if (adding) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextField(draft, { draft = it }, Modifier.weight(1f), label = { Text("New $label") }, singleLine = true)
+                TextButton(
+                    onClick = { onSelect(draft.trim()); adding = false },
+                    enabled = draft.isNotBlank(),
+                ) { Text("Add") }
+                TextButton(onClick = { adding = false }) { Text("Cancel") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FuelForm(v: Vehicle, vm: AppViewModel, save: (FuelEntry) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: FuelEntry? = null) {
     val context = LocalContext.current
     val locale = Locale.getDefault()
+    val existingFuels = vm.fuelEntries(v.id).collectAsState(initial = emptyList()).value
+    val stationSuggestions = remember(existingFuels) { existingFuels.mapNotNull { it.stationName?.trim() }.filter { it.isNotEmpty() }.distinct().sortedBy { it.lowercase() } }
+    val labelSuggestions = remember(existingFuels) { existingFuels.map { it.fuelLabel.trim() }.filter { it.isNotEmpty() }.distinct().sortedBy { it.lowercase() } }
     var kind by remember(initial) { mutableStateOf(initial?.kind ?: FuelKind.LIQUID) }
-    var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
+    var date by remember(initial) { mutableStateOf(initial?.date ?: LocalDate.now()) }
     var amount by remember(initial, v.volumeUnit, v.energyUnit) { mutableStateOf(if (initial?.kind == FuelKind.ELECTRIC) initial.energy?.let { VehicleValueFormatter.formatEnergy(it, v.energyUnit, locale) } ?: "" else initial?.volume?.let { VehicleValueFormatter.formatVolume(it, v.volumeUnit, locale) } ?: "") }
     var unitPrice by remember(initial) { mutableStateOf(initial?.unitPrice?.let { VehicleValueFormatter.formatUnitPrice(it, locale) } ?: "") }
     var cost by remember(initial) { mutableStateOf(initial?.totalCost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") }
@@ -773,7 +878,7 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
     var receipt by remember(initial) { mutableStateOf(initial?.receiptFileName) }
     var error by remember { mutableStateOf<String?>(null) }
     val initialAmount = if (initial?.kind == FuelKind.ELECTRIC) initial.energy?.let { VehicleValueFormatter.formatEnergy(it, v.energyUnit, locale) } ?: "" else initial?.volume?.let { VehicleValueFormatter.formatVolume(it, v.volumeUnit, locale) } ?: ""
-    val dirty = kind != (initial?.kind ?: FuelKind.LIQUID) || date != (initial?.date?.toString() ?: LocalDate.now().toString()) || amount != initialAmount || unitPrice != (initial?.unitPrice?.let { VehicleValueFormatter.formatUnitPrice(it, locale) } ?: "") || cost != (initial?.totalCost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || label != (initial?.fuelLabel ?: "") || station != (initial?.stationName ?: "") || notes != (initial?.notes ?: "") || full != (initial?.fullTank ?: true) || missed != (initial?.missedPreviousFillUp ?: false) || receipt != initial?.receiptFileName
+    val dirty = kind != (initial?.kind ?: FuelKind.LIQUID) || date != (initial?.date ?: LocalDate.now()) || amount != initialAmount || unitPrice != (initial?.unitPrice?.let { VehicleValueFormatter.formatUnitPrice(it, locale) } ?: "") || cost != (initial?.totalCost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || label != (initial?.fuelLabel ?: "") || station != (initial?.stationName ?: "") || notes != (initial?.notes ?: "") || full != (initial?.fullTank ?: true) || missed != (initial?.missedPreviousFillUp ?: false) || receipt != initial?.receiptFileName
     val requestCancel = rememberDiscardRequest(dirty, cancel)
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -782,12 +887,11 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
         }
     }
     val doSave: () -> Unit = {
-        val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
         val parsedOdometer = VehicleValueFormatter.parseDistance(odo, v.distanceUnit, locale)
         val parsedMoney = VehicleValueFormatter.parseMoney(cost, v.currency, locale)
         val parsedVolume = if (kind == FuelKind.LIQUID) VehicleValueFormatter.parseVolume(amount, v.volumeUnit, locale) else null
         val parsedEnergy = if (kind == FuelKind.ELECTRIC) VehicleValueFormatter.parseEnergy(amount, v.energyUnit, locale) else null
-        val candidate = if (parsedDate != null && parsedOdometer != null && parsedMoney != null && (parsedVolume != null || parsedEnergy != null)) FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = parsedDate, odometer = parsedOdometer, kind = kind, volume = parsedVolume, energy = parsedEnergy, unitPrice = unitPrice.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseUnitPrice(it, v.currency, locale) }, totalCost = parsedMoney, fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
+        val candidate = if (parsedOdometer != null && parsedMoney != null && (parsedVolume != null || parsedEnergy != null)) FuelEntry(id = initial?.id ?: 0, vehicleId = v.id, date = date, odometer = parsedOdometer, kind = kind, volume = parsedVolume, energy = parsedEnergy, unitPrice = unitPrice.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseUnitPrice(it, v.currency, locale) }, totalCost = parsedMoney, fuelLabel = label.ifBlank { if (kind == FuelKind.LIQUID) "Fuel" else "Charging" }, fullTank = full, missedPreviousFillUp = missed, stationName = station.ifBlank { null }, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
         when (val validation = candidate?.let { Validators.fuelEntry(it, Clock.systemDefaultZone()) }) {
             null -> error = "Use a valid date, odometer, decimal measurement, cost, and optional unit price"
             is ValidationResult.Error -> error = validation.message
@@ -807,7 +911,7 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
             item {
                 SectionCard {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        TextField(date, { date = it }, Modifier.weight(1f), label = { Text("Date") }, singleLine = true)
+                        DateField(date, "Date", { selected -> if (selected != null) date = selected }, Modifier.weight(1f))
                     }
                     TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
                 }
@@ -827,8 +931,8 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
             }
             item {
                 SectionCard {
-                    TextField(station, { station = it }, Modifier.fillMaxWidth(), label = { Text("Gas station") }, placeholder = { Text("e.g. Shell, Ampol, Costco") }, singleLine = true)
-                    TextField(label, { label = it }, Modifier.fillMaxWidth(), label = { Text("Fuel grade (optional)") }, placeholder = { Text("e.g. Unleaded 95, Regular, Premium") }, singleLine = true)
+                    SuggestionField(station, "Gas station", stationSuggestions, "Select or quick add a station") { station = it }
+                    SuggestionField(label, "Fuel grade (optional)", labelSuggestions, "Select or quick add a grade") { label = it }
                     TextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2)
                     TextButton(onClick = { receiptPicker.launch(arrayOf("image/*", "application/pdf")) }) {
                         Icon(if (receipt == null) Icons.Outlined.AttachFile else Icons.Filled.CheckCircle, contentDescription = null, Modifier.size(18.dp))
@@ -846,7 +950,7 @@ private fun FuelForm(v: Vehicle, save: (FuelEntry) -> Unit, cancel: () -> Unit, 
 private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> Unit, cancel: () -> Unit, modifier: Modifier, initial: ExpenseRecord? = null) {
     val context = LocalContext.current
     val locale = Locale.getDefault()
-    var date by remember(initial) { mutableStateOf(initial?.date?.toString() ?: LocalDate.now().toString()) }
+    var date by remember(initial) { mutableStateOf(initial?.date ?: LocalDate.now()) }
     var title by remember(initial) { mutableStateOf(initial?.title ?: "") }
     var description by remember(initial) { mutableStateOf(initial?.description ?: "") }
     var cost by remember(initial) { mutableStateOf(initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") }
@@ -857,7 +961,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     var typeInitialized by remember(initial?.id) { mutableStateOf(false) }
     var performedBy by remember(initial) { mutableStateOf(initial?.performedBy ?: PerformedBy.SELF) }
     var shop by remember(initial) { mutableStateOf(initial?.shopName ?: "") }
-    var warranty by remember(initial) { mutableStateOf(initial?.warrantyUntil?.toString() ?: "") }
+    var warranty by remember(initial) { mutableStateOf(initial?.warrantyUntil) }
     var receipt by remember(initial) { mutableStateOf(initial?.receiptFileName) }
     var notes by remember(initial) { mutableStateOf(initial?.notes ?: "") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -873,7 +977,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
     LaunchedEffect(category) {
         if (typeInitialized && types.none { it.id == type && it.category == category }) type = categoryTypes.firstOrNull()?.id ?: 0
     }
-    val dirty = date != (initial?.date?.toString() ?: LocalDate.now().toString()) || title != (initial?.title ?: "") || description != (initial?.description ?: "") || cost != (initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || performedBy != (initial?.performedBy ?: PerformedBy.SELF) || shop != (initial?.shopName ?: "") || warranty != (initial?.warrantyUntil?.toString() ?: "") || receipt != initial?.receiptFileName || notes != (initial?.notes ?: "") || type != (initial?.typeId ?: 0)
+    val dirty = date != (initial?.date ?: LocalDate.now()) || title != (initial?.title ?: "") || description != (initial?.description ?: "") || cost != (initial?.cost?.let { VehicleValueFormatter.formatMoney(it, locale) } ?: "") || odo != (initial?.odometer?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || performedBy != (initial?.performedBy ?: PerformedBy.SELF) || shop != (initial?.shopName ?: "") || warranty != initial?.warrantyUntil || receipt != initial?.receiptFileName || notes != (initial?.notes ?: "") || type != (initial?.typeId ?: 0)
     val requestCancel = rememberDiscardRequest(dirty, cancel)
     val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -882,11 +986,9 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
         }
     }
     val doSave: () -> Unit = {
-        val parsedDate = runCatching { LocalDate.parse(date) }.getOrNull()
-        val parsedWarranty = warranty.takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         val parsedCost = VehicleValueFormatter.parseMoney(cost, v.currency, locale)
         val parsedOdometer = VehicleValueFormatter.parseDistance(odo, v.distanceUnit, locale)
-        val candidate = if (type != 0L && title.isNotBlank() && parsedDate != null && parsedCost != null && parsedOdometer != null && (warranty.isBlank() || parsedWarranty != null)) ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = parsedDate, odometer = parsedOdometer, title = title.trim(), description = description.ifBlank { null }, cost = parsedCost, performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = parsedWarranty, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
+        val candidate = if (type != 0L && title.isNotBlank() && parsedCost != null && parsedOdometer != null) ExpenseRecord(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, date = date, odometer = parsedOdometer, title = title.trim(), description = description.ifBlank { null }, cost = parsedCost, performedBy = performedBy, shopName = shop.ifBlank { null }, warrantyUntil = warranty, receiptFileName = receipt, notes = notes.ifBlank { null }, createdAt = initial?.createdAt ?: System.currentTimeMillis(), updatedAt = System.currentTimeMillis()) else null
         when (val validation = candidate?.let(Validators::expenseRecord)) {
             null -> error = "Choose a type and enter a title, odometer, and valid cost"
             is ValidationResult.Error -> error = validation.message
@@ -907,7 +1009,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
             }
             item { Text("Record type", style = MaterialTheme.typography.titleSmall) }
             item { RecordTypeDropdown(categoryTypes, type) { type = it } }
-            item { TextField(date, { date = it }, Modifier.fillMaxWidth(), label = { Text("Date (YYYY-MM-DD)") }, singleLine = true) }
+            item { DateField(date, "Date", { selected -> if (selected != null) date = selected }) }
             item { TextField(title, { title = it }, Modifier.fillMaxWidth(), label = { Text("Title") }, singleLine = true) }
             item { TextField(description, { description = it }, Modifier.fillMaxWidth(), label = { Text("Description (optional)") }, minLines = 2) }
             item { TextField(odo, { odo = it }, Modifier.fillMaxWidth(), label = { Text("Odometer (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true) }
@@ -920,7 +1022,7 @@ private fun ExpenseForm(v: Vehicle, vm: AppViewModel, save: (ExpenseRecord) -> U
                 }
             }
             if (performedBy == PerformedBy.SHOP) item { TextField(shop, { shop = it }, Modifier.fillMaxWidth(), label = { Text("Shop / mechanic name") }, singleLine = true) }
-            item { TextField(warranty, { warranty = it }, Modifier.fillMaxWidth(), label = { Text("Warranty until (optional, YYYY-MM-DD)") }, singleLine = true) }
+            item { DateField(warranty, "Warranty until (optional)", { warranty = it }, allowClear = true) }
             item { TextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 2) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1094,10 +1196,28 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
 // ---------- Settings / Stats / Portability ----------
 
 @Composable
-private fun SettingsScreen(state: ShellState, modifier: Modifier, onStats: () -> Unit, onData: () -> Unit, onTypes: () -> Unit) {
+private fun SettingsScreen(state: ShellState, vm: AppViewModel, modifier: Modifier, onStats: () -> Unit, onData: () -> Unit, onTypes: () -> Unit) {
+    val themeMode by vm.themeMode.collectAsState()
     ScreenHeader("Settings", modifier) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item { SettingsRow("Active vehicle", state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.currency ?: "No vehicle") }
+            item {
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Appearance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Choose a theme or follow your device setting.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ThemeMode.entries.forEach { mode ->
+                                FilterChip(
+                                    selected = themeMode == mode,
+                                    onClick = { vm.setThemeMode(mode) },
+                                    label = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             item { SettingsRow("Statistics", "Fuel economy and cost trends", onStats) }
             item { SettingsRow("Record types", "Manage service, repair, upgrade, and other types", onTypes) }
             item { SettingsRow("Backup & migration", "JSON • CSV • Drivvo • Fuelio", onData) }
@@ -1265,7 +1385,36 @@ private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
             item { OutlinedButton(onClick = { importer.launch(arrayOf("text/csv", "text/plain", "text/comma-separated-values")) }, Modifier.fillMaxWidth()) { Text("Import Drivvo / Fuelio CSV") } }
             preview?.let { p ->
                 item { ChartCard("Import preview", "${p.domain.fuelEntries.size} fuel • ${p.domain.expenseRecords.size} expenses • ${p.report.count { it.level.toString().contains("WARN") }} warnings • ${p.report.count { it.level.toString().contains("SKIP") }} skipped") }
-                if (p.domain.recordTypes.isNotEmpty()) item { ChartCard("Expense types to import", p.domain.recordTypes.joinToString("\n") { "${it.name} → ${categoryLabel(it.category)}" }) }
+                if (p.domain.recordTypes.isNotEmpty()) {
+                    item {
+                        Text("Expense type wiring", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Choose where each Drivvo type will appear before applying the import.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    items(p.domain.recordTypes, key = { "import-type-${it.id}" }) { type ->
+                        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(type.name, fontWeight = FontWeight.SemiBold)
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    RecordCategory.entries.forEach { category ->
+                                        FilterChip(
+                                            selected = type.category == category,
+                                            onClick = {
+                                                preview = p.copy(
+                                                    domain = p.domain.copy(
+                                                        recordTypes = p.domain.recordTypes.map { candidate ->
+                                                            if (candidate.id == type.id) candidate.copy(category = category) else candidate
+                                                        },
+                                                    ),
+                                                )
+                                            },
+                                            label = { Text(categoryLabel(category)) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (p.report.isNotEmpty()) item { ChartCard("Report details", p.report.take(8).joinToString("\n") { "Row ${it.row}: ${it.code}" }) }
                 item { Button(onClick = { vm.applyImport(p); preview = null; message = "Import applied" }, Modifier.fillMaxWidth()) { Text("Apply import") } }
             }

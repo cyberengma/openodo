@@ -78,7 +78,7 @@ object DrivvoImporter {
                     if (date == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_DATE", "Drivvo date is invalid"); continue }
                     if (odo == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_ODOMETER", "Drivvo odometer is invalid"); continue }
                     if (volume == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_VOLUME", "Drivvo volume is invalid"); continue }
-                    fuels += FuelEntry(fuels.size + 1L, 1, date, Metres(odo * 1_000), FuelKind.LIQUID, Millilitres.litres(volume), null, UnitPrice((row[4].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(1000))?.toLong() ?: 0), "USD"), Money((row[5].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLong() ?: 0), "USD"), row.getOrElse(3) { "Fuel" }, row.getOrElse(7) { "No" } == "Yes", false, row.getOrNull(26)?.ifBlank { null }, null, row.getOrNull(28)?.ifBlank { null }, 0, 0)
+                    fuels += FuelEntry(fuels.size + 1L, 1, date, Metres(odo * 1_000), FuelKind.LIQUID, Millilitres.litres(volume), null, UnitPrice((row[4].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(1000))?.toLong() ?: 0), "USD"), Money((row[5].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLong() ?: 0), "USD"), row.getOrElse(3) { "Fuel" }, row.getOrElse(7) { "No" } == "Yes", false, row.getOrNull(25)?.ifBlank { null }, null, row.getOrNull(29)?.ifBlank { null }, 0, 0)
                 }
                 (section == "expense" || section == "service") && row.size >= 6 && row[0].isNotBlank() -> {
                     val date = runCatching { LocalDate.parse(row.getOrElse(2) { "" }, drivvoDate) }.getOrNull()

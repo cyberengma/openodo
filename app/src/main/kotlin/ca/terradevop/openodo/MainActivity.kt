@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ca.terradevop.openodo.ui.ThemeMode
 import ca.terradevop.openodo.ui.theme.OpenodoTheme
 import ca.terradevop.openodo.ui.OpenOdoApp
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +20,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            OpenodoTheme(darkTheme = isSystemInDarkTheme()) { OpenOdoApp(appViewModel) }
+            val themeMode by appViewModel.themeMode.collectAsState()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            OpenodoTheme(darkTheme = darkTheme) { OpenOdoApp(appViewModel) }
         }
     }
 }

@@ -27,6 +27,8 @@ class FixtureImporterTest {
         assertTrue("imported=${result.domain.fuelEntries.size} report=${result.report.size}", result.domain.fuelEntries.size > 150)
         assertEquals(40_457_000L, result.domain.fuelEntries.first().odometer.value)
         assertEquals(16_056L, result.domain.fuelEntries.first().volume!!.value)
+        assertEquals("Total Hadath", result.domain.fuelEntries.first().stationName)
+        assertTrue(result.domain.fuelEntries.none { it.stationName == "Enigma" })
         assertTrue(result.report.any { it.code == "DRIVVO_MISSED_DEFAULT_FALSE" })
     }
 
