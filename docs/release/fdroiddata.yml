@@ -48,4 +48,4 @@ CurrentVersionCode: 1
 # Generate the production keystore once, then fill these from the signed release:
 #
 # AllowedAPKSigningKeys: <sha256 of the APK signing certificate>
-# Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%c.apk
+# Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_v%v.apk

@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
       - uses: android-actions/setup-android@v3
       - name: Install SDK tools
-        run: sdkmanager "platforms;android-37" "build-tools;34.0.0"
+        run: sdkmanager "platforms;android-37" "build-tools;34.0.0" "build-tools;37.0.0"
       - name: Build unsigned release
         run: ./gradlew --no-daemon assembleRelease
       - name: Sign release
@@ -30,10 +30,17 @@ jobs:
         run: |
           test -n "$RELEASE_KEYSTORE_B64"
           mkdir -p "$RUNNER_TEMP/keys"
-          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/keys/release.jks"
-          apksigner sign --ks "$RUNNER_TEMP/keys/release.jks" --ks-pass "pass:$RELEASE_STORE_PASSWORD" --ks-key-alias "$RELEASE_KEY_ALIAS" --key-pass "pass:$RELEASE_KEY_PASSWORD" app/build/outputs/apk/release/app-release-unsigned.apk
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/openodo-release.apk
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/keys/release.p12"
+          APK_VER="${GITHUB_REF_NAME#v}"
+          echo "APK_VER=$APK_VER" >> "$GITHUB_ENV"
+          "$ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner" sign \
+            --ks "$RUNNER_TEMP/keys/release.p12" \
+            --ks-key-alias "$RELEASE_KEY_ALIAS" \
+            --ks-pass "pass:$RELEASE_STORE_PASSWORD" \
+            --key-pass "pass:$RELEASE_KEY_PASSWORD" \
+            --out "app/build/outputs/apk/release/ca.cyberengma.openodo_${APK_VER}.apk" \
+            app/build/outputs/apk/release/app-release-unsigned.apk
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/openodo-release.apk
+          files: app/build/outputs/apk/release/ca.cyberengma.openodo_${{ env.APK_VER }}.apk
