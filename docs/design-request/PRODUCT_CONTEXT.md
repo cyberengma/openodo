@@ -25,7 +25,7 @@ The app must remain useful when the dataset is initially empty.
 
 ## Existing technical context
 
-- Package/application id: `ca.terradevop.openodo`.
+- Package/application id: `ca.cyberengma.openodo`.
 - Android UI: Jetpack Compose and Material 3.
 - Domain logic: pure Kotlin in `core`; UI and platform I/O in `app`.
 - Persistence is planned for Slice 06.

@@ -1,20 +1,51 @@
+# Draft F-Droid metadata for ca.cyberengma.openodo.
+# Paste the uncommented block into fdroiddata as
+# metadata/ca.cyberengma.openodo.yml before opening the "New App" MR.
+
+AutoName: OpenOdo
+Summary: Private offline vehicle logs, reminders, fuel and expense history
+
+Description: |
+  OpenOdo is a private, offline vehicle log for people who want their fuel,
+  charging, maintenance, expenses and reminders to stay on their device.
+
+  Track liquid fuel and electric charging with exact units and costs. Keep one
+  unified history for service, repair, upgrade and other work. Create reminders
+  that reset automatically when matching work is logged. Review fuel economy,
+  cost and trend statistics, and import existing Drivvo or Fuelio CSV data.
+
+  OpenOdo has no account, ads, analytics, trackers, cloud sync or network
+  requirement. It is free software released under GPL-3.0-only.
+
+SourceCode: https://github.com/cyberengma/openodo
+IssueTracker: https://github.com/cyberengma/openodo/issues
+Changelog: https://github.com/cyberengma/openodo/releases
+
 AntiFeatures: []
 Categories:
   - Money
 License: GPL-3.0-only
-SourceCode: https://github.com/cyberengma/openodo
-IssueTracker: https://github.com/cyberengma/openodo/issues
-Changelog: https://github.com/cyberengma/openodo/releases
+
 RepoType: git
 Repo: https://github.com/cyberengma/openodo.git
+
+# The Gradle project lives at the repository root (gradlew, settings.gradle.kts,
+# and the :app module). There is no wrapper under app/, so subdir must not be
+# "app".
 Builds:
   - versionName: 0.1.0
     versionCode: 1
     commit: v0.1.0
-    subdir: app
     gradle:
       - yes
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1
+
+# --- Operator-supplied, added at submission time ---------------------------------
+# Generate the production keystore once, then fill these from the signed release:
+#
+# AllowedAPKSigningKeys: <sha256 of the APK signing certificate>
+# Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%c.apk

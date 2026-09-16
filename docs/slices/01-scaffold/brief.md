@@ -29,7 +29,7 @@ against it.
 3. `core/build.gradle.kts`: `kotlin("jvm")`, serialization plugin, JVM
    target 17, deps limited to stdlib + serialization-json + test libs.
 4. `app/build.gradle.kts`: `com.android.application`, compileSdk 36,
-   targetSdk 36, minSdk 26, `applicationId = "ca.terradevop.openodo"`,
+   targetSdk 36, minSdk 26, `applicationId = "ca.cyberengma.openodo"`,
    literal `versionCode = 1` and `versionName = "0.1.0"` in
    `defaultConfig` (never computed), Java/Kotlin target 17 while Gradle
    runs on JDK 21, Compose enabled, Hilt + Room via KSP, Room schema

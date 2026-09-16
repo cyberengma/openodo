@@ -41,6 +41,5 @@ docs/            architecture, slices (brief/progress/handoffs), formats, releas
 fixtures/        import samples used by slice 05 tests (operator-supplied)
 ```
 
-Package root: `ca.terradevop.openodo` (placeholder `applicationId`,
-renamed pre-release). GPL-3.0-only everywhere — `LICENSE` at root, SPDX
-header on every source file.
+Package root: `ca.cyberengma.openodo`. GPL-3.0-only everywhere —
+`LICENSE` at root, SPDX header on every source file.

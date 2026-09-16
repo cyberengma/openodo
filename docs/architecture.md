@@ -13,8 +13,7 @@ reminders that auto-reset when the matching work is logged. Everything is
 offline, stored locally, exportable, and importable from Drivvo and Fuelio
 CSV exports. No ads, no trackers, no `INTERNET` permission.
 
-Working name and `applicationId` (`ca.terradevop.openodo`) are placeholders
-until release; renaming pre-release is a planning change, not a worker task.
+The `applicationId` is `ca.cyberengma.openodo`, finalized for release.
 
 ## Stack (pinned in `gradle/libs.versions.toml` by slice 01)
 

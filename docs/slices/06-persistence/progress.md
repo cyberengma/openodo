@@ -20,4 +20,4 @@ Implementation has started locally; no dependencies are added.
 - Vehicle-scoped units/currency round-trip without canonical-value mutation.
 - Explicit active/archived vehicle queries and no implicit deletion.
 - Robolectric persistence tests pass offline; full gate passes.
-- Schema committed at `app/schemas/ca.terradevop.openodo.data.local.OpenOdoDatabase/1.json`.
+- Schema committed at `app/schemas/ca.cyberengma.openodo.data.local.OpenOdoDatabase/1.json`.

@@ -12,11 +12,11 @@ dependencyLocking {
 }
 
 android {
-    namespace = "ca.terradevop.openodo"
+    namespace = "ca.cyberengma.openodo"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "ca.terradevop.openodo"
+        applicationId = "ca.cyberengma.openodo"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

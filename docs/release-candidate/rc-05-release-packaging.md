@@ -16,7 +16,7 @@ the production signing key.
   secrets only.
 - Two clean unsigned release builds and SHA-256/diffoscope proof.
 - `docs/release/fdroiddata.yml` draft for
-  `ca.terradevop.openodo`.
+  `ca.cyberengma.openodo`.
 - Repeatable fdroidserver lint/build instructions.
 - Release version/tag preparation; no tag or signing key is created without
   operator approval.

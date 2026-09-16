@@ -43,7 +43,7 @@ Room tests use the Robolectric runner with `sdk = 35` and remain offline.
 Generated and committed:
 
 ```text
-app/schemas/ca.terradevop.openodo.data.local.OpenOdoDatabase/1.json
+app/schemas/ca.cyberengma.openodo.data.local.OpenOdoDatabase/1.json
 ```
 
 ## Gate

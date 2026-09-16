@@ -10,7 +10,7 @@ in slice 10; items marked (operator) are yours.
 - All dependencies FLOSS and served from Maven Central / Google Maven;
   no Firebase, GMS, Crashlytics, ads, trackers → no anti-features.
 - No `INTERNET` permission; nothing downloaded at runtime.
-- Unique `applicationId` under a domain you own (`ca.terradevop.openodo`);
+- Unique `applicationId` under a domain you own (`ca.cyberengma.openodo`);
   not a fork, so no rebranding rule applies.
 - Builds from the command line with a FLOSS toolchain (Debian OpenJDK 21,
   Gradle wrapper, Android SDK — SDK prebuilts are explicitly permitted).
@@ -35,11 +35,12 @@ in slice 10; items marked (operator) are yours.
 - [ ] Two consecutive clean release builds produce byte-identical
       unsigned APKs (`diffoscope` or `sha256sum` in the handoff) — the
       red proof for reproducibility.
-- [ ] `docs/release/fdroiddata.yml`: a draft `metadata/ca.terradevop.openodo.yml`
+- [ ] `docs/release/fdroiddata.yml`: a draft `metadata/ca.cyberengma.openodo.yml`
       with `Categories: [Money]` (Autu Mandu's category; confirm at submission),
       `License: GPL-3.0-only`, `SourceCode`, `IssueTracker`, `Changelog`,
-      `RepoType: git`, `Repo`, one `Builds:` block (`subdir: app`,
-      `gradle: [yes]`), `AutoUpdateMode: Version`, `UpdateCheckMode: Tags`,
+      `RepoType: git`, `Repo`, one `Builds:` block (the Gradle project is at
+      the repo root, so omit `subdir`; `gradle: [yes]`),
+      `AutoUpdateMode: Version`, `UpdateCheckMode: Tags`,
       `CurrentVersion`/`CurrentVersionCode`, plus `AllowedAPKSigningKeys`
       and `Binaries:` pointing at the GitHub release asset URL pattern.
 - [ ] `fdroid lint` and `fdroid build` pass in the fdroidserver container
@@ -58,7 +59,7 @@ in slice 10; items marked (operator) are yours.
 - [ ] Tag `v1.0.0` on the release commit; build and publish the signed
       APK from CI at that tag (never from Android Studio or a dirty tree).
 - [ ] Fork `fdroiddata`, add the metadata file, run the container
-      `fdroid readmeta && fdroid lint && fdroid build ca.terradevop.openodo`,
+      `fdroid readmeta && fdroid lint && fdroid build ca.cyberengma.openodo`,
       push, open the merge request labelled `New App`.
 - [ ] Reply to packager questions promptly; expect 24–48 h after merge
       before the app appears.
