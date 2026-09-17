@@ -1134,6 +1134,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
     var typeInitialized by remember(initial?.id) { mutableStateOf(false) }
     var months by remember(initial) { mutableStateOf(initial?.intervalMonths?.toString() ?: "") }
     var distance by remember(initial, v.distanceUnit) { mutableStateOf(initial?.intervalDistance?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") }
+    var active by remember(initial) { mutableStateOf(initial?.active ?: true) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(types, initial?.id) {
         if (!typeInitialized && types.isNotEmpty()) {
@@ -1141,7 +1142,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
             typeInitialized = true
         }
     }
-    val dirty = type != (initial?.typeId ?: 0) || months != (initial?.intervalMonths?.toString() ?: "") || distance != (initial?.intervalDistance?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "")
+    val dirty = type != (initial?.typeId ?: 0) || months != (initial?.intervalMonths?.toString() ?: "") || distance != (initial?.intervalDistance?.let { VehicleValueFormatter.formatDistance(it, v.distanceUnit, locale) } ?: "") || active != (initial?.active ?: true)
     val requestCancel = rememberDiscardRequest(dirty, cancel)
 
     ScreenHeader(if (initial == null) "Add reminder" else "Edit reminder", modifier) {
@@ -1150,6 +1151,13 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
             item { RecordTypeDropdown(types, type) { type = it } }
             item { TextField(months, { months = it }, Modifier.fillMaxWidth(), label = { Text("Interval months") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) }
             item { TextField(distance, { distance = it }, Modifier.fillMaxWidth(), label = { Text("Interval distance (${distanceLabel(v.distanceUnit)})") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true) }
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(checked = active, onCheckedChange = { active = it })
+                    Spacer(Modifier.width(8.dp))
+                    Text("Active reminder")
+                }
+            }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1157,7 +1165,7 @@ private fun ReminderForm(v: Vehicle, vm: AppViewModel, save: (Reminder) -> Unit,
                     Button(onClick = {
                         val m = months.toIntOrNull()
                         val d = distance.takeIf { it.isNotBlank() }?.let { VehicleValueFormatter.parseDistance(it, v.distanceUnit, locale) }
-                        val candidate = Reminder(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, intervalDistance = d, intervalMonths = m, anchorDate = initial?.anchorDate, anchorOdometer = initial?.anchorOdometer, active = initial?.active ?: true)
+                        val candidate = Reminder(id = initial?.id ?: 0, vehicleId = v.id, typeId = type, intervalDistance = d, intervalMonths = m, anchorDate = initial?.anchorDate, anchorOdometer = initial?.anchorOdometer, active = active)
                         when (val validation = Validators.reminder(candidate)) {
                             is ValidationResult.Error -> error = validation.message
                             else -> if (type == 0L) error = "Choose a service type" else save(candidate)
@@ -1213,7 +1221,7 @@ private fun ReminderCard(r: Reminder, s: ReminderStatus, name: String, v: Vehicl
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") }
                 TextButton(onClick = { vm.saveReminder(r.copy(anchorDate = LocalDate.now(), anchorOdometer = currentOdometer)) }, enabled = currentOdometer != null) { Icon(Icons.Outlined.Refresh, contentDescription = null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Reset") }
-                IconButton(onClick = { vm.saveReminder(r.copy(active = false)) }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = "Deactivate", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                IconButton(onClick = { vm.saveReminder(r.copy(active = !r.active)) }) { Icon(Icons.Outlined.PowerSettingsNew, contentDescription = if (r.active) "Deactivate" else "Activate", tint = if (r.active) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary) }
             }
         }
     }
