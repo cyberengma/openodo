@@ -24,11 +24,12 @@ class FixtureImporterTest {
     @Test fun `drivvo fresh fixture imports vehicle and refueling rows`() {
         val result = DrivvoImporter.import(read("drivvo-sample.csv"))
         assertEquals(1, result.domain.vehicles.size)
-        assertTrue("imported=${result.domain.fuelEntries.size} report=${result.report.size}", result.domain.fuelEntries.size > 150)
-        assertEquals(40_457_000L, result.domain.fuelEntries.first().odometer.value)
-        assertEquals(16_056L, result.domain.fuelEntries.first().volume!!.value)
-        assertEquals("Total Hadath", result.domain.fuelEntries.first().stationName)
-        assertTrue(result.domain.fuelEntries.none { it.stationName == "Enigma" })
+        assertEquals("Family Sedan", result.domain.vehicles.first().name)
+        assertEquals(11, result.domain.fuelEntries.size)
+        assertEquals(12_000_000L, result.domain.fuelEntries.first().odometer.value)
+        assertEquals(12_500L, result.domain.fuelEntries.first().volume!!.value)
+        assertEquals("Shell", result.domain.fuelEntries.first().stationName)
+        assertTrue(result.domain.fuelEntries.any { it.stationName == "Costco" })
         assertTrue(result.report.any { it.code == "DRIVVO_MISSED_DEFAULT_FALSE" })
     }
 
