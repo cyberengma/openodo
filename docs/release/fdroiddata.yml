@@ -1,9 +1,6 @@
-# F-Droid metadata — paste as metadata/ca.cyberengma.openodo.yml in fdroiddata.
-
 Categories:
   - Finance Manager
 License: GPL-3.0-only
-
 SourceCode: https://github.com/cyberengma/openodo
 IssueTracker: https://github.com/cyberengma/openodo/issues
 Changelog: https://github.com/cyberengma/openodo/releases
@@ -12,7 +9,8 @@ AutoName: OpenOdo
 
 RepoType: git
 Repo: https://github.com/cyberengma/openodo.git
-Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
+Binaries: 
+  https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
 
 Builds:
   - versionName: 0.1.0
@@ -22,7 +20,8 @@ Builds:
     gradle:
       - yes
 
-AllowedAPKSigningKeys: b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
+AllowedAPKSigningKeys: 
+  b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
