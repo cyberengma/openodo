@@ -11,10 +11,10 @@ source.
 
 ## Screenshots
 
+Nine phone screenshots (`fastlane/metadata/android/en-US/images/phoneScreenshots/1..9.png`, 1008×2244), generated from the running OpenOdo app against the synthetic sample data (`fixtures/sample-data/openodo-sample-backup.json`).
+
 | Asset | License/source |
 |---|---|
-| `fastlane/metadata/android/en-US/images/phoneScreenshots/*.png` | PENDING — generated from the running OpenOdo app; GPL-3.0-only project asset. |
+| `phoneScreenshots/1..9.png` | Generated from the OpenOdo application; GPL-3.0-only project asset. |
 
-No third-party artwork is committed. The icon is final; phone screenshots must
-be captured on-device/emulator and added to the directory above before the
-F-Droid submission.
+No third-party artwork is committed. The icon and screenshots are final.
