@@ -1,6 +1,9 @@
 Categories:
   - Finance Manager
 License: GPL-3.0-only
+AuthorName: Enigma
+AuthorEmail: cyberengma@pm.me
+AuthorWebSite: https://www.cyberengma.com
 SourceCode: https://github.com/cyberengma/openodo
 IssueTracker: https://github.com/cyberengma/openodo/issues
 Changelog: https://github.com/cyberengma/openodo/releases
@@ -15,7 +18,7 @@ Binaries:
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: v0.1.0
+    commit: da6d55c3483b609ced4348b84b608566ae66eb1b
     subdir: app
     gradle:
       - yes
