@@ -1,6 +1,4 @@
-# Draft F-Droid metadata for ca.cyberengma.openodo.
-# Paste the uncommented block into fdroiddata as
-# metadata/ca.cyberengma.openodo.yml before opening the "New App" MR.
+# F-Droid metadata — paste as metadata/ca.cyberengma.openodo.yml in fdroiddata.
 
 AutoName: OpenOdo
 Summary: Private offline vehicle logs, reminders, fuel and expense history
@@ -29,9 +27,6 @@ License: GPL-3.0-only
 RepoType: git
 Repo: https://github.com/cyberengma/openodo.git
 
-# The Gradle project lives at the repository root (gradlew, settings.gradle.kts,
-# and the :app module). There is no wrapper under app/, so subdir must not be
-# "app".
 Builds:
   - versionName: 0.1.0
     versionCode: 1
@@ -44,9 +39,6 @@ UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1
 
-# Developer-signed reproducible builds. Fill Binaries <commit> once the tagged
-# release exists; AllowedAPKSigningKeys is the SHA-256 of the signing cert
-# (keytool SHA256, colons removed).
 AllowedAPKSigningKeys:
   - b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
-# Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_v%v.apk
+Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
