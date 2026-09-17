@@ -1,0 +1,711 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": 1726400000000,
+  "appVersion": "0.1.0",
+  "vehicles": [
+    {
+      "id": 1,
+      "name": "Civic Touring",
+      "make": "Honda",
+      "model": "Civic",
+      "year": 2021,
+      "vin": "1HG00000000000000",
+      "photoFileName": null,
+      "distanceUnit": "KILOMETRES",
+      "volumeUnit": "LITRES",
+      "energyUnit": "KILOWATT_HOURS",
+      "currency": "USD",
+      "manualOdometer": null,
+      "manualOdometerAt": null,
+      "isArchived": false,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    }
+  ],
+  "recordTypes": [
+    {
+      "id": 1,
+      "category": "SERVICE",
+      "name": "oil change",
+      "isDefault": true
+    },
+    {
+      "id": 2,
+      "category": "SERVICE",
+      "name": "oil filter",
+      "isDefault": true
+    },
+    {
+      "id": 3,
+      "category": "SERVICE",
+      "name": "air filter",
+      "isDefault": true
+    },
+    {
+      "id": 4,
+      "category": "SERVICE",
+      "name": "cabin filter",
+      "isDefault": true
+    },
+    {
+      "id": 5,
+      "category": "SERVICE",
+      "name": "brake pads",
+      "isDefault": true
+    },
+    {
+      "id": 6,
+      "category": "SERVICE",
+      "name": "brake fluid",
+      "isDefault": true
+    },
+    {
+      "id": 7,
+      "category": "SERVICE",
+      "name": "tire rotation",
+      "isDefault": true
+    },
+    {
+      "id": 8,
+      "category": "SERVICE",
+      "name": "wheel alignment",
+      "isDefault": true
+    },
+    {
+      "id": 9,
+      "category": "SERVICE",
+      "name": "coolant",
+      "isDefault": true
+    },
+    {
+      "id": 10,
+      "category": "SERVICE",
+      "name": "spark plugs",
+      "isDefault": true
+    },
+    {
+      "id": 11,
+      "category": "SERVICE",
+      "name": "transmission fluid",
+      "isDefault": true
+    },
+    {
+      "id": 12,
+      "category": "SERVICE",
+      "name": "timing belt",
+      "isDefault": true
+    },
+    {
+      "id": 13,
+      "category": "SERVICE",
+      "name": "battery",
+      "isDefault": true
+    },
+    {
+      "id": 14,
+      "category": "SERVICE",
+      "name": "general inspection",
+      "isDefault": true
+    },
+    {
+      "id": 15,
+      "category": "REPAIR",
+      "name": "engine",
+      "isDefault": true
+    },
+    {
+      "id": 16,
+      "category": "REPAIR",
+      "name": "transmission",
+      "isDefault": true
+    },
+    {
+      "id": 17,
+      "category": "REPAIR",
+      "name": "electrical",
+      "isDefault": true
+    },
+    {
+      "id": 18,
+      "category": "REPAIR",
+      "name": "body",
+      "isDefault": true
+    },
+    {
+      "id": 19,
+      "category": "REPAIR",
+      "name": "suspension",
+      "isDefault": true
+    },
+    {
+      "id": 20,
+      "category": "REPAIR",
+      "name": "exhaust",
+      "isDefault": true
+    },
+    {
+      "id": 21,
+      "category": "REPAIR",
+      "name": "cooling",
+      "isDefault": true
+    },
+    {
+      "id": 22,
+      "category": "REPAIR",
+      "name": "other",
+      "isDefault": true
+    },
+    {
+      "id": 23,
+      "category": "UPGRADE",
+      "name": "wheels & tires",
+      "isDefault": true
+    },
+    {
+      "id": 24,
+      "category": "UPGRADE",
+      "name": "suspension",
+      "isDefault": true
+    },
+    {
+      "id": 25,
+      "category": "UPGRADE",
+      "name": "exhaust",
+      "isDefault": true
+    },
+    {
+      "id": 26,
+      "category": "UPGRADE",
+      "name": "brakes",
+      "isDefault": true
+    },
+    {
+      "id": 27,
+      "category": "UPGRADE",
+      "name": "audio",
+      "isDefault": true
+    },
+    {
+      "id": 28,
+      "category": "UPGRADE",
+      "name": "lighting",
+      "isDefault": true
+    },
+    {
+      "id": 29,
+      "category": "UPGRADE",
+      "name": "body kit",
+      "isDefault": true
+    },
+    {
+      "id": 30,
+      "category": "UPGRADE",
+      "name": "performance",
+      "isDefault": true
+    },
+    {
+      "id": 31,
+      "category": "UPGRADE",
+      "name": "other",
+      "isDefault": true
+    },
+    {
+      "id": 32,
+      "category": "OTHER",
+      "name": "insurance",
+      "isDefault": true
+    },
+    {
+      "id": 33,
+      "category": "OTHER",
+      "name": "registration",
+      "isDefault": true
+    },
+    {
+      "id": 34,
+      "category": "OTHER",
+      "name": "inspection fee",
+      "isDefault": true
+    },
+    {
+      "id": 35,
+      "category": "OTHER",
+      "name": "parking",
+      "isDefault": true
+    },
+    {
+      "id": 36,
+      "category": "OTHER",
+      "name": "tolls",
+      "isDefault": true
+    },
+    {
+      "id": 37,
+      "category": "OTHER",
+      "name": "fine",
+      "isDefault": true
+    },
+    {
+      "id": 38,
+      "category": "OTHER",
+      "name": "wash",
+      "isDefault": true
+    },
+    {
+      "id": 39,
+      "category": "OTHER",
+      "name": "accessories",
+      "isDefault": true
+    },
+    {
+      "id": 40,
+      "category": "OTHER",
+      "name": "other",
+      "isDefault": true
+    }
+  ],
+  "fuelEntries": [
+    {
+      "id": 1,
+      "vehicleId": 1,
+      "date": "2025-11-02",
+      "odometer": 12000000,
+      "kind": "LIQUID",
+      "volume": 38000,
+      "energy": null,
+      "unitPriceMilli": 1249,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4746,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Shell",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 2,
+      "vehicleId": 1,
+      "date": "2025-11-28",
+      "odometer": 12480000,
+      "kind": "LIQUID",
+      "volume": 35500,
+      "energy": null,
+      "unitPriceMilli": 1259,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4469,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Costco",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 3,
+      "vehicleId": 1,
+      "date": "2025-12-20",
+      "odometer": 13020000,
+      "kind": "LIQUID",
+      "volume": 39000,
+      "energy": null,
+      "unitPriceMilli": 1199,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4676,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Chevron",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 4,
+      "vehicleId": 1,
+      "date": "2026-01-15",
+      "odometer": 13540000,
+      "kind": "LIQUID",
+      "volume": 36200,
+      "energy": null,
+      "unitPriceMilli": 1279,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4630,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Exxon",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 5,
+      "vehicleId": 1,
+      "date": "2026-02-07",
+      "odometer": 14010000,
+      "kind": "LIQUID",
+      "volume": 34800,
+      "energy": null,
+      "unitPriceMilli": 1299,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4521,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Premium",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Shell",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 6,
+      "vehicleId": 1,
+      "date": "2026-03-01",
+      "odometer": 14520000,
+      "kind": "LIQUID",
+      "volume": 37600,
+      "energy": null,
+      "unitPriceMilli": 1289,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4847,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Costco",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 7,
+      "vehicleId": 1,
+      "date": "2026-03-25",
+      "odometer": 15030000,
+      "kind": "LIQUID",
+      "volume": 33000,
+      "energy": null,
+      "unitPriceMilli": 1319,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4353,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": false,
+      "missedPreviousFillUp": false,
+      "stationName": "Mobil",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 8,
+      "vehicleId": 1,
+      "date": "2026-04-18",
+      "odometer": 15510000,
+      "kind": "LIQUID",
+      "volume": 36900,
+      "energy": null,
+      "unitPriceMilli": 1339,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4941,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Premium",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Sunoco",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 9,
+      "vehicleId": 1,
+      "date": "2026-05-06",
+      "odometer": 16020000,
+      "kind": "LIQUID",
+      "volume": 35100,
+      "energy": null,
+      "unitPriceMilli": 1349,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4735,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": false,
+      "missedPreviousFillUp": true,
+      "stationName": "Shell",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 10,
+      "vehicleId": 1,
+      "date": "2026-06-02",
+      "odometer": 16530000,
+      "kind": "LIQUID",
+      "volume": 38200,
+      "energy": null,
+      "unitPriceMilli": 1329,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 5077,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Chevron",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 11,
+      "vehicleId": 1,
+      "date": "2026-07-01",
+      "odometer": 17040000,
+      "kind": "LIQUID",
+      "volume": 36500,
+      "energy": null,
+      "unitPriceMilli": 1359,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 4960,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Regular",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "Exxon",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 12,
+      "vehicleId": 1,
+      "date": "2026-07-15",
+      "odometer": 17400000,
+      "kind": "ELECTRIC",
+      "volume": null,
+      "energy": 40000,
+      "unitPriceMilli": 120,
+      "unitPriceCurrency": "USD",
+      "totalCostMinor": 480,
+      "totalCostCurrency": "USD",
+      "fuelLabel": "Level 2",
+      "fullTank": true,
+      "missedPreviousFillUp": false,
+      "stationName": "ChargePoint",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    }
+  ],
+  "expenseRecords": [
+    {
+      "id": 1,
+      "vehicleId": 1,
+      "typeId": 1,
+      "date": "2026-03-15",
+      "odometer": 14600000,
+      "title": "oil change",
+      "description": null,
+      "costMinor": 6250,
+      "costCurrency": "USD",
+      "performedBy": "SHOP",
+      "shopName": "Quick Lube",
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": "Full synthetic",
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 2,
+      "vehicleId": 1,
+      "typeId": 7,
+      "date": "2026-03-15",
+      "odometer": 14600000,
+      "title": "tire rotation",
+      "description": null,
+      "costMinor": 2500,
+      "costCurrency": "USD",
+      "performedBy": "SHOP",
+      "shopName": "Quick Lube",
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 3,
+      "vehicleId": 1,
+      "typeId": 5,
+      "date": "2026-04-02",
+      "odometer": 15200000,
+      "title": "brake pads",
+      "description": null,
+      "costMinor": 18000,
+      "costCurrency": "USD",
+      "performedBy": "SHOP",
+      "shopName": "Auto Services",
+      "warrantyUntil": "2028-04-02",
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 4,
+      "vehicleId": 1,
+      "typeId": 27,
+      "date": "2026-01-10",
+      "odometer": 13400000,
+      "title": "audio",
+      "description": null,
+      "costMinor": 32000,
+      "costCurrency": "USD",
+      "performedBy": "SELF",
+      "shopName": null,
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": "Aftermarket head unit",
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 5,
+      "vehicleId": 1,
+      "typeId": 32,
+      "date": "2026-01-01",
+      "odometer": 13300000,
+      "title": "insurance",
+      "description": null,
+      "costMinor": 54000,
+      "costCurrency": "USD",
+      "performedBy": "SELF",
+      "shopName": null,
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 6,
+      "vehicleId": 1,
+      "typeId": 38,
+      "date": "2026-05-20",
+      "odometer": 15800000,
+      "title": "wash",
+      "description": null,
+      "costMinor": 1500,
+      "costCurrency": "USD",
+      "performedBy": "SELF",
+      "shopName": null,
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 7,
+      "vehicleId": 1,
+      "typeId": 9,
+      "date": "2026-06-10",
+      "odometer": 16600000,
+      "title": "coolant",
+      "description": null,
+      "costMinor": 4500,
+      "costCurrency": "USD",
+      "performedBy": "SHOP",
+      "shopName": "Auto Services",
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    },
+    {
+      "id": 8,
+      "vehicleId": 1,
+      "typeId": 14,
+      "date": "2026-04-28",
+      "odometer": 15600000,
+      "title": "general inspection",
+      "description": null,
+      "costMinor": 9000,
+      "costCurrency": "USD",
+      "performedBy": "SHOP",
+      "shopName": "Auto Services",
+      "warrantyUntil": null,
+      "receiptFileName": null,
+      "notes": null,
+      "createdAt": 0,
+      "updatedAt": 0
+    }
+  ],
+  "reminders": [
+    {
+      "id": 1,
+      "vehicleId": 1,
+      "typeId": 1,
+      "intervalDistance": 5000000,
+      "intervalMonths": 6,
+      "anchorDate": "2026-03-15",
+      "anchorOdometer": 14600000,
+      "active": true
+    },
+    {
+      "id": 2,
+      "vehicleId": 1,
+      "typeId": 5,
+      "intervalDistance": 10000000,
+      "intervalMonths": null,
+      "anchorDate": "2026-04-02",
+      "anchorOdometer": 15200000,
+      "active": true
+    },
+    {
+      "id": 3,
+      "vehicleId": 1,
+      "typeId": 14,
+      "intervalDistance": 5000000,
+      "intervalMonths": null,
+      "anchorDate": "2025-11-01",
+      "anchorOdometer": 11000000,
+      "active": true
+    },
+    {
+      "id": 4,
+      "vehicleId": 1,
+      "typeId": 7,
+      "intervalDistance": 8000000,
+      "intervalMonths": null,
+      "anchorDate": "2026-03-15",
+      "anchorOdometer": 14600000,
+      "active": true
+    }
+  ],
+  "photos": []
+}
