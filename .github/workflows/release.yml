@@ -16,9 +16,19 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - name: Install SDK tools
-        run: sdkmanager "platforms;android-37" "build-tools;34.0.0" "build-tools;37.0.0"
+      - name: Set up Android SDK
+        run: |
+          ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -n 1)"
+          test -n "$SDKMANAGER" || { echo "sdkmanager not found"; exit 1; }
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "Using sdkmanager: $SDKMANAGER"
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-37" "build-tools;34.0.0" "build-tools;37.0.0"
       - name: Build unsigned release
         run: ./gradlew --no-daemon assembleRelease
       - name: Sign release

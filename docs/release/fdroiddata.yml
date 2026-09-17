@@ -44,8 +44,9 @@ UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1
 
-# --- Operator-supplied, added at submission time ---------------------------------
-# Generate the production keystore once, then fill these from the signed release:
-#
-# AllowedAPKSigningKeys: <sha256 of the APK signing certificate>
+# Developer-signed reproducible builds. Fill Binaries <commit> once the tagged
+# release exists; AllowedAPKSigningKeys is the SHA-256 of the signing cert
+# (keytool SHA256, colons removed).
+AllowedAPKSigningKeys:
+  - b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
 # Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_v%v.apk
