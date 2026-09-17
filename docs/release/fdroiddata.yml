@@ -1,44 +1,30 @@
 # F-Droid metadata — paste as metadata/ca.cyberengma.openodo.yml in fdroiddata.
 
-AutoName: OpenOdo
-Summary: Private offline vehicle logs, reminders, fuel and expense history
-
-Description: |
-  OpenOdo is a private, offline vehicle log for people who want their fuel,
-  charging, maintenance, expenses and reminders to stay on their device.
-
-  Track liquid fuel and electric charging with exact units and costs. Keep one
-  unified history for service, repair, upgrade and other work. Create reminders
-  that reset automatically when matching work is logged. Review fuel economy,
-  cost and trend statistics, and import existing Drivvo or Fuelio CSV data.
-
-  OpenOdo has no account, ads, analytics, trackers, cloud sync or network
-  requirement. It is free software released under GPL-3.0-only.
+Categories:
+  - Finance Manager
+License: GPL-3.0-only
 
 SourceCode: https://github.com/cyberengma/openodo
 IssueTracker: https://github.com/cyberengma/openodo/issues
 Changelog: https://github.com/cyberengma/openodo/releases
 
-AntiFeatures: []
-Categories:
-  - Money
-License: GPL-3.0-only
+AutoName: OpenOdo
 
 RepoType: git
 Repo: https://github.com/cyberengma/openodo.git
+Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
 
 Builds:
   - versionName: 0.1.0
     versionCode: 1
     commit: v0.1.0
+    subdir: app
     gradle:
       - yes
+
+AllowedAPKSigningKeys: b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1
-
-AllowedAPKSigningKeys:
-  - b45fd3c00234fc511188c8a7b5e67a4464f30682d5295e62849fc2c86ab27122
-Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
