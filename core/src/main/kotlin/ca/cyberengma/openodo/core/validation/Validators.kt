@@ -46,9 +46,12 @@ object Validators {
         return fail(codes, "invalid fuel entry")
     }
 
-    /** ExpenseRecord rules: cost >= 0. */
+    /** ExpenseRecord rules: at least one line item; each cost >= 0. */
     fun expenseRecord(record: ExpenseRecord): ValidationResult {
-        if (record.cost.minor < 0) {
+        if (record.lineItems.isEmpty()) {
+            return fail(listOf(ValidationErrorCode.NO_LINE_ITEMS), "at least one service type is required")
+        }
+        if (record.lineItems.any { it.cost.minor < 0 }) {
             return fail(listOf(ValidationErrorCode.NEGATIVE_COST), "cost must not be negative")
         }
         return ValidationResult.Ok

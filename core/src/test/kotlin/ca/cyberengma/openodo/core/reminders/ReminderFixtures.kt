@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package ca.cyberengma.openodo.core.reminders
 
+import ca.cyberengma.openodo.core.model.ExpenseLineItem
 import ca.cyberengma.openodo.core.model.ExpenseRecord
 import ca.cyberengma.openodo.core.model.PerformedBy
+import ca.cyberengma.openodo.core.model.RecordCategory
 import ca.cyberengma.openodo.core.model.Reminder
 import ca.cyberengma.openodo.core.money.Money
 import ca.cyberengma.openodo.core.units.Metres
@@ -37,17 +39,16 @@ internal fun record(
 ) = ExpenseRecord(
     id = id,
     vehicleId = vehicleId,
-    typeId = typeId,
+    category = RecordCategory.SERVICE,
     date = date,
     odometer = Metres(odometer),
-    title = "service",
     description = null,
-    cost = Money(100, "CAD"),
     performedBy = PerformedBy.SELF,
     shopName = null,
     warrantyUntil = null,
     receiptFileName = null,
     notes = null,
+    lineItems = listOf(ExpenseLineItem(typeId, Money(100, "CAD"))),
     createdAt = id,
     updatedAt = id,
 )

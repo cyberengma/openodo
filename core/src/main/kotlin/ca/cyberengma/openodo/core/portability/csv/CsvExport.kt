@@ -16,7 +16,11 @@ object CsvExport {
     }, writer)
 
     fun expenseRecords(domain: PortabilityDomain, writer: Writer) = Rfc4180.write(sequence {
-        yield(listOf("id","vehicle_id","type_id","date","odometer_m","title","cost_minor","currency","performed_by"))
-        domain.expenseRecords.forEach { yield(listOf(it.id.toString(),it.vehicleId.toString(),it.typeId.toString(),it.date.toString(),it.odometer.value.toString(),it.title,it.cost.minor.toString(),it.cost.currency,it.performedBy.name)) }
+        yield(listOf("id","vehicle_id","type_id","date","odometer_m","cost_minor","currency","performed_by"))
+        domain.expenseRecords.forEach { record ->
+            record.lineItems.forEach { item ->
+                yield(listOf(record.id.toString(),record.vehicleId.toString(),item.typeId.toString(),record.date.toString(),record.odometer.value.toString(),item.cost.minor.toString(),item.cost.currency,record.performedBy.name))
+            }
+        }
     }, writer)
 }

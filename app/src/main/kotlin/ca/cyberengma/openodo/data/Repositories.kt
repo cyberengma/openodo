@@ -64,21 +64,36 @@ class RoomFuelEntryRepository @Inject constructor(private val dao: FuelEntryDao)
 
 interface ExpenseRecordRepository {
     fun observeForVehicle(vehicleId: Long): Flow<List<ExpenseRecord>>
-    suspend fun findForVehicleAndType(vehicleId: Long, typeId: Long): List<ExpenseRecord>
     suspend fun save(record: ExpenseRecord): Long
     suspend fun delete(record: ExpenseRecord)
 }
 
-class RoomExpenseRecordRepository @Inject constructor(private val dao: ExpenseRecordDao) : ExpenseRecordRepository {
-    override fun observeForVehicle(vehicleId: Long) = dao.observeForVehicle(vehicleId).map { it.map(ExpenseRecordEntity::toCore) }
-    override suspend fun findForVehicleAndType(vehicleId: Long, typeId: Long) = dao.findForVehicleAndType(vehicleId,typeId).map(ExpenseRecordEntity::toCore)
+class RoomExpenseRecordRepository @Inject constructor(
+    private val dao: ExpenseRecordDao,
+    private val lineItems: ExpenseLineItemDao,
+) : ExpenseRecordRepository {
+    override fun observeForVehicle(vehicleId: Long): Flow<List<ExpenseRecord>> =
+        dao.observeForVehicle(vehicleId).map { entities ->
+            val ids = entities.map { it.id }
+            val items = if (ids.isEmpty()) emptyList() else lineItems.findForRecords(ids)
+            val byRecord = items.groupBy { it.expenseRecordId }
+            entities.map { entity ->
+                entity.toCore().copy(lineItems = byRecord[entity.id].orEmpty().map(ExpenseLineItemEntity::toCore))
+            }
+        }
+
     override suspend fun save(record: ExpenseRecord): Long {
         val entity = record.toEntity()
-        if (entity.id == 0L) return dao.insert(entity)
-        dao.update(entity)
-        return entity.id
+        val id = if (entity.id == 0L) dao.insert(entity) else { dao.update(entity); entity.id }
+        lineItems.deleteForRecord(id)
+        lineItems.insertAll(record.lineItems.map { it.toEntity(id) })
+        return id
     }
-    override suspend fun delete(record: ExpenseRecord) = dao.delete(record.toEntity())
+
+    override suspend fun delete(record: ExpenseRecord) {
+        lineItems.deleteForRecord(record.id)
+        dao.delete(record.toEntity())
+    }
 }
 
 interface ReminderRepository {

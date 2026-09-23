@@ -2,6 +2,7 @@
 package ca.cyberengma.openodo.data
 
 import androidx.room.Room
+import ca.cyberengma.openodo.core.model.ExpenseLineItem
 import ca.cyberengma.openodo.core.model.ExpenseRecord
 import ca.cyberengma.openodo.core.model.PerformedBy
 import ca.cyberengma.openodo.core.model.RecordCategory
@@ -43,6 +44,7 @@ class DomainTransactionCoordinatorTest {
             db.recordTypeDao(),
             db.fuelEntryDao(),
             db.expenseRecordDao(),
+            db.expenseLineItemDao(),
             db.reminderDao(),
         )
     }
@@ -91,17 +93,16 @@ class DomainTransactionCoordinatorTest {
 
     private fun expense(vehicleId: Long, typeId: Long, date: LocalDate, odometer: Long) = ExpenseRecord(
         vehicleId = vehicleId,
-        typeId = typeId,
+        category = RecordCategory.SERVICE,
         date = date,
         odometer = Metres(odometer),
-        title = "Service",
         description = null,
-        cost = Money(1_000, "CAD"),
         performedBy = PerformedBy.SELF,
         shopName = null,
         warrantyUntil = null,
         receiptFileName = null,
         notes = null,
+        lineItems = listOf(ExpenseLineItem(typeId, Money(1_000, "CAD"))),
         createdAt = 1,
         updatedAt = 1,
     )

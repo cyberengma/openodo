@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package ca.cyberengma.openodo.data
 
+import ca.cyberengma.openodo.core.model.FuelType
 import ca.cyberengma.openodo.core.model.Vehicle
 import ca.cyberengma.openodo.core.units.DistanceUnit
 import ca.cyberengma.openodo.core.units.EnergyUnit
@@ -27,6 +28,7 @@ internal fun vehicle(
     volumeUnit = volume,
     energyUnit = energy,
     currency = currency,
+    fuelType = FuelType.FUEL,
     manualOdometer = Metres(12_345),
     manualOdometerAt = 100,
     isArchived = archived,

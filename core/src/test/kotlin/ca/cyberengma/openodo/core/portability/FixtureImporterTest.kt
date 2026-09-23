@@ -37,7 +37,7 @@ class FixtureImporterTest {
         val result = DrivvoImporter.import(read("drivvo-sample.csv"))
         assertTrue("expenses=${result.domain.expenseRecords.size}", result.domain.expenseRecords.isNotEmpty())
         assertTrue("types=${result.domain.recordTypes.size}", result.domain.recordTypes.isNotEmpty())
-        assertTrue(result.domain.expenseRecords.all { it.typeId != 0L })
+        assertTrue(result.domain.expenseRecords.all { it.lineItems.isNotEmpty() && it.lineItems.all { li -> li.typeId != 0L } })
     }
 
     @Test fun `invalid importer rows are skipped`() {

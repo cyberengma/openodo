@@ -17,6 +17,6 @@ class SampleBackupRoundTripTest {
         assertEquals(8, domain.expenseRecords.size)
         assertEquals(4, domain.reminders.size)
         assertTrue(domain.fuelEntries.any { it.kind == ca.cyberengma.openodo.core.model.FuelKind.ELECTRIC })
-        assertTrue(domain.expenseRecords.all { record -> domain.recordTypes.any { it.id == record.typeId } })
+        assertTrue(domain.expenseRecords.all { record -> record.lineItems.all { li -> domain.recordTypes.any { it.id == li.typeId } } })
     }
 }

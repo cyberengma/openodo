@@ -18,6 +18,7 @@ data class Vehicle(
     val volumeUnit: VolumeUnit,
     val energyUnit: EnergyUnit,
     val currency: String,
+    val fuelType: FuelType,
     val manualOdometer: Metres?,
     val manualOdometerAt: Long?,
     val isArchived: Boolean,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package ca.cyberengma.openodo.ui
 
+import ca.cyberengma.openodo.core.model.FuelType
 import ca.cyberengma.openodo.core.model.Vehicle
 import ca.cyberengma.openodo.core.units.DistanceUnit
 import ca.cyberengma.openodo.core.units.EnergyUnit
@@ -38,7 +39,7 @@ class AppShellStateTest {
     private fun vehicle(id: Long, name: String, distance: DistanceUnit, volume: VolumeUnit, currency: String) = Vehicle(
         id = id, name = name, make = "Make", model = "Model", year = 2024,
         vin = null, photoFileName = null, distanceUnit = distance, volumeUnit = volume,
-        energyUnit = EnergyUnit.KILOWATT_HOURS, currency = currency,
+        energyUnit = EnergyUnit.KILOWATT_HOURS, currency = currency, fuelType = FuelType.FUEL,
         manualOdometer = null, manualOdometerAt = null, isArchived = false,
         notes = null, createdAt = 0, updatedAt = 0,
     )

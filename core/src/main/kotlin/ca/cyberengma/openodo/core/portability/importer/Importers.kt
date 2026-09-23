@@ -19,7 +19,7 @@ object FuelioImporter {
     fun import(source: String): ImportResult {
         val rows = Rfc4180.read(StringReader(source)).toList()
         val vehicleRow = rows.getOrNull(2) ?: return ImportResult(PortabilityDomain(), listOf(ImportNote(1, ImportLevel.SKIP, "MISSING_VEHICLE", "vehicle section missing")))
-        val vehicle = Vehicle(1, vehicleRow[0], vehicleRow.getOrElse(9) { "" }, vehicleRow.getOrElse(10) { "" }, vehicleRow.getOrElse(11) { "0" }.toIntOrNull() ?: 0, null, null, ca.cyberengma.openodo.core.units.DistanceUnit.KILOMETRES, ca.cyberengma.openodo.core.units.VolumeUnit.LITRES, ca.cyberengma.openodo.core.units.EnergyUnit.KILOWATT_HOURS, "USD", null, null, false, vehicleRow.getOrNull(1)?.ifBlank { null }, 0, 0)
+        val vehicle = Vehicle(1, vehicleRow[0], vehicleRow.getOrElse(9) { "" }, vehicleRow.getOrElse(10) { "" }, vehicleRow.getOrElse(11) { "0" }.toIntOrNull() ?: 0, null, null, ca.cyberengma.openodo.core.units.DistanceUnit.KILOMETRES, ca.cyberengma.openodo.core.units.VolumeUnit.LITRES, ca.cyberengma.openodo.core.units.EnergyUnit.KILOWATT_HOURS, "USD", FuelType.FUEL, null, null, false, vehicleRow.getOrNull(1)?.ifBlank { null }, 0, 0)
         val entries = mutableListOf<FuelEntry>()
         val notes = mutableListOf<ImportNote>()
         rows.drop(5).forEachIndexed { index, row ->
@@ -44,7 +44,7 @@ object DrivvoImporter {
         val notes = mutableListOf<ImportNote>()
         val vehicleHeader = rows.indexOfFirst { it.firstOrNull() == "Vehicle Name" && it.getOrNull(1) == "Active" }
         val vehicleRow = rows.getOrNull(vehicleHeader + 1)
-        val vehicle = vehicleRow?.let { Vehicle(1, it[0], it.getOrElse(3) { "" }, it.getOrElse(4) { "" }, it.getOrElse(6) { "0" }.toIntOrNull() ?: 0, null, null, ca.cyberengma.openodo.core.units.DistanceUnit.KILOMETRES, ca.cyberengma.openodo.core.units.VolumeUnit.LITRES, ca.cyberengma.openodo.core.units.EnergyUnit.KILOWATT_HOURS, "USD", null, null, it.getOrElse(1) { "Yes" } != "Yes", it.getOrNull(11)?.ifBlank { null }, 0, 0) }
+        val vehicle = vehicleRow?.let { Vehicle(1, it[0], it.getOrElse(3) { "" }, it.getOrElse(4) { "" }, it.getOrElse(6) { "0" }.toIntOrNull() ?: 0, null, null, ca.cyberengma.openodo.core.units.DistanceUnit.KILOMETRES, ca.cyberengma.openodo.core.units.VolumeUnit.LITRES, ca.cyberengma.openodo.core.units.EnergyUnit.KILOWATT_HOURS, "USD", FuelType.FUEL, null, null, it.getOrElse(1) { "Yes" } != "Yes", it.getOrNull(11)?.ifBlank { null }, 0, 0) }
 
         val fuels = mutableListOf<FuelEntry>()
         val expenses = mutableListOf<ExpenseRecord>()
@@ -93,7 +93,7 @@ object DrivvoImporter {
                         recordTypes += RecordType(id, guessCategory(typeName), typeName, false)
                         id
                     }
-                    expenses += ExpenseRecord(expenses.size + 1L, 1, typeId, date, Metres(odo * 1_000), row.getOrNull(9)?.ifBlank { null } ?: typeName, null, Money((cost.multiply(java.math.BigDecimal(100))).toLong(), "USD"), PerformedBy.SHOP, row.getOrNull(5)?.ifBlank { null }, null, null, null, 0, 0)
+                    expenses += ExpenseRecord(expenses.size + 1L, 1, guessCategory(typeName), date, Metres(odo * 1_000), null, PerformedBy.SHOP, row.getOrNull(5)?.ifBlank { null }, null, null, row.getOrNull(9)?.ifBlank { null }, listOf(ExpenseLineItem(typeId, Money((cost.multiply(java.math.BigDecimal(100))).toLong(), "USD"))), 0, 0)
                 }
             }
         }

@@ -17,6 +17,7 @@ data class VehicleEntity(
     val volumeUnit: String,
     val energyUnit: String,
     val currency: String,
+    val fuelType: String,
     val manualOdometerMetres: Long?,
     val manualOdometerAt: Long?,
     val isArchived: Boolean,
@@ -60,13 +61,10 @@ data class FuelEntryEntity(
 data class ExpenseRecordEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val vehicleId: Long,
-    val typeId: Long,
+    val category: String,
     val date: String,
     val odometerMetres: Long,
-    val title: String,
     val description: String?,
-    val costMinor: Long,
-    val costCurrency: String,
     val performedBy: String,
     val shopName: String?,
     val warrantyUntil: String?,
@@ -74,6 +72,15 @@ data class ExpenseRecordEntity(
     val notes: String?,
     val createdAt: Long,
     val updatedAt: Long,
+)
+
+@Entity(tableName = "expense_line_items")
+data class ExpenseLineItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val expenseRecordId: Long,
+    val typeId: Long,
+    val costMinor: Long,
+    val costCurrency: String,
 )
 
 @Entity(tableName = "reminders")

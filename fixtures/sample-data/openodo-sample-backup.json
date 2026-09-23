@@ -15,6 +15,7 @@
       "volumeUnit": "LITRES",
       "energyUnit": "KILOWATT_HOURS",
       "currency": "USD",
+      "fuelType": "FUEL",
       "manualOdometer": null,
       "manualOdometerAt": null,
       "isArchived": false,
@@ -523,144 +524,176 @@
     {
       "id": 1,
       "vehicleId": 1,
-      "typeId": 1,
+      "category": "SERVICE",
       "date": "2026-03-15",
       "odometer": 14600000,
-      "title": "oil change",
       "description": null,
-      "costMinor": 6250,
-      "costCurrency": "USD",
       "performedBy": "SHOP",
       "shopName": "Quick Lube",
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": "Full synthetic",
+      "lineItems": [
+        {
+          "typeId": 1,
+          "costMinor": 6250,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 2,
       "vehicleId": 1,
-      "typeId": 7,
+      "category": "SERVICE",
       "date": "2026-03-15",
       "odometer": 14600000,
-      "title": "tire rotation",
       "description": null,
-      "costMinor": 2500,
-      "costCurrency": "USD",
       "performedBy": "SHOP",
       "shopName": "Quick Lube",
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 7,
+          "costMinor": 2500,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 3,
       "vehicleId": 1,
-      "typeId": 5,
+      "category": "SERVICE",
       "date": "2026-04-02",
       "odometer": 15200000,
-      "title": "brake pads",
       "description": null,
-      "costMinor": 18000,
-      "costCurrency": "USD",
       "performedBy": "SHOP",
       "shopName": "Auto Services",
       "warrantyUntil": "2028-04-02",
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 5,
+          "costMinor": 18000,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 4,
       "vehicleId": 1,
-      "typeId": 27,
+      "category": "UPGRADE",
       "date": "2026-01-10",
       "odometer": 13400000,
-      "title": "audio",
       "description": null,
-      "costMinor": 32000,
-      "costCurrency": "USD",
       "performedBy": "SELF",
       "shopName": null,
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": "Aftermarket head unit",
+      "lineItems": [
+        {
+          "typeId": 27,
+          "costMinor": 32000,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 5,
       "vehicleId": 1,
-      "typeId": 32,
+      "category": "OTHER",
       "date": "2026-01-01",
       "odometer": 13300000,
-      "title": "insurance",
       "description": null,
-      "costMinor": 54000,
-      "costCurrency": "USD",
       "performedBy": "SELF",
       "shopName": null,
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 32,
+          "costMinor": 54000,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 6,
       "vehicleId": 1,
-      "typeId": 38,
+      "category": "OTHER",
       "date": "2026-05-20",
       "odometer": 15800000,
-      "title": "wash",
       "description": null,
-      "costMinor": 1500,
-      "costCurrency": "USD",
       "performedBy": "SELF",
       "shopName": null,
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 38,
+          "costMinor": 1500,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 7,
       "vehicleId": 1,
-      "typeId": 9,
+      "category": "SERVICE",
       "date": "2026-06-10",
       "odometer": 16600000,
-      "title": "coolant",
       "description": null,
-      "costMinor": 4500,
-      "costCurrency": "USD",
       "performedBy": "SHOP",
       "shopName": "Auto Services",
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 9,
+          "costMinor": 4500,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     },
     {
       "id": 8,
       "vehicleId": 1,
-      "typeId": 14,
+      "category": "SERVICE",
       "date": "2026-04-28",
       "odometer": 15600000,
-      "title": "general inspection",
       "description": null,
-      "costMinor": 9000,
-      "costCurrency": "USD",
       "performedBy": "SHOP",
       "shopName": "Auto Services",
       "warrantyUntil": null,
       "receiptFileName": null,
       "notes": null,
+      "lineItems": [
+        {
+          "typeId": 14,
+          "costMinor": 9000,
+          "costCurrency": "USD"
+        }
+      ],
       "createdAt": 0,
       "updatedAt": 0
     }

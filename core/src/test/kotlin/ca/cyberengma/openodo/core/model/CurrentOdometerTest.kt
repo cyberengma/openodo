@@ -111,6 +111,7 @@ class CurrentOdometerTest {
         volumeUnit = VolumeUnit.LITRES,
         energyUnit = EnergyUnit.KILOWATT_HOURS,
         currency = "CAD",
+        fuelType = FuelType.FUEL,
         manualOdometer = manual,
         manualOdometerAt = at,
         isArchived = false,

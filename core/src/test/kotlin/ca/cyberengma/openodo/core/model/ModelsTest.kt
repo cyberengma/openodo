@@ -28,6 +28,7 @@ class ModelsTest {
             volumeUnit = VolumeUnit.LITRES,
             energyUnit = EnergyUnit.KILOWATT_HOURS,
             currency = "CAD",
+            fuelType = FuelType.FUEL,
             manualOdometer = null,
             manualOdometerAt = null,
             isArchived = false,

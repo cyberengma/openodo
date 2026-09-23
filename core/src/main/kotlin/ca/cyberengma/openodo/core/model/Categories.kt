@@ -14,6 +14,12 @@ enum class FuelKind {
     ELECTRIC,
 }
 
+enum class FuelType {
+    FUEL,
+    ELECTRIC,
+    HYBRID,
+}
+
 enum class PerformedBy {
     SELF,
     SHOP,

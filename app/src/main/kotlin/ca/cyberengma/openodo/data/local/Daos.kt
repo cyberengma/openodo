@@ -82,11 +82,11 @@ interface ExpenseRecordDao {
     @Query("SELECT * FROM expense_records WHERE vehicleId = :vehicleId ORDER BY date DESC, odometerMetres DESC, id DESC")
     fun observeForVehicle(vehicleId: Long): Flow<List<ExpenseRecordEntity>>
 
-    @Query("SELECT * FROM expense_records WHERE vehicleId = :vehicleId AND typeId = :typeId ORDER BY date DESC, odometerMetres DESC, id DESC")
-    suspend fun findForVehicleAndType(vehicleId: Long, typeId: Long): List<ExpenseRecordEntity>
-
     @Query("SELECT * FROM expense_records WHERE id = :id")
     suspend fun findById(id: Long): ExpenseRecordEntity?
+
+    @Query("SELECT * FROM expense_records WHERE vehicleId = :vehicleId")
+    suspend fun findForVehicle(vehicleId: Long): List<ExpenseRecordEntity>
 
     @Insert
     suspend fun insert(record: ExpenseRecordEntity): Long
@@ -101,6 +101,36 @@ interface ExpenseRecordDao {
     suspend fun deleteForVehicle(vehicleId: Long)
 
     @Query("DELETE FROM expense_records")
+    suspend fun deleteAll()
+}
+
+@Dao
+interface ExpenseLineItemDao {
+    @Insert
+    suspend fun insert(item: ExpenseLineItemEntity): Long
+
+    @Insert
+    suspend fun insertAll(items: List<ExpenseLineItemEntity>)
+
+    @Query("SELECT li.* FROM expense_line_items li INNER JOIN expense_records er ON li.expenseRecordId = er.id WHERE er.vehicleId = :vehicleId")
+    fun observeForVehicle(vehicleId: Long): Flow<List<ExpenseLineItemEntity>>
+
+    @Query("SELECT * FROM expense_line_items WHERE expenseRecordId = :expenseRecordId ORDER BY id")
+    suspend fun findForRecord(expenseRecordId: Long): List<ExpenseLineItemEntity>
+
+    @Query("SELECT * FROM expense_line_items WHERE expenseRecordId IN (:expenseRecordIds)")
+    suspend fun findForRecords(expenseRecordIds: List<Long>): List<ExpenseLineItemEntity>
+
+    @Query("SELECT * FROM expense_line_items WHERE expenseRecordId IN (:expenseRecordIds) AND typeId = :typeId ORDER BY id")
+    suspend fun findForRecordsAndType(expenseRecordIds: List<Long>, typeId: Long): List<ExpenseLineItemEntity>
+
+    @Query("DELETE FROM expense_line_items WHERE expenseRecordId = :expenseRecordId")
+    suspend fun deleteForRecord(expenseRecordId: Long)
+
+    @Query("DELETE FROM expense_line_items WHERE expenseRecordId IN (SELECT id FROM expense_records WHERE vehicleId = :vehicleId)")
+    suspend fun deleteForVehicle(vehicleId: Long)
+
+    @Query("DELETE FROM expense_line_items")
     suspend fun deleteAll()
 }
 

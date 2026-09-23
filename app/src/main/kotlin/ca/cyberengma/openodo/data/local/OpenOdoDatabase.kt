@@ -10,9 +10,10 @@ import androidx.room.RoomDatabase
         RecordTypeEntity::class,
         FuelEntryEntity::class,
         ExpenseRecordEntity::class,
+        ExpenseLineItemEntity::class,
         ReminderEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class OpenOdoDatabase : RoomDatabase() {
@@ -20,5 +21,6 @@ abstract class OpenOdoDatabase : RoomDatabase() {
     abstract fun recordTypeDao(): RecordTypeDao
     abstract fun fuelEntryDao(): FuelEntryDao
     abstract fun expenseRecordDao(): ExpenseRecordDao
+    abstract fun expenseLineItemDao(): ExpenseLineItemDao
     abstract fun reminderDao(): ReminderDao
 }
