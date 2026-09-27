@@ -17,4 +17,10 @@ Nine phone screenshots (`fastlane/metadata/android/en-US/images/phoneScreenshots
 |---|---|
 | `phoneScreenshots/1..9.png` | Generated from the OpenOdo application; GPL-3.0-only project asset. |
 
-No third-party artwork is committed. The icon and screenshots are final.
+## Feature graphic (Play Store)
+
+| Asset | License/source |
+|---|---|
+| `fastlane/metadata/android/en-US/images/featureGraphic.png` (1024×500) | Derived from `docs/brand/logo.png` on the primary teal background; GPL-3.0-only project asset. |
+
+No third-party artwork is committed. The icon, screenshots, and feature graphic are final.
