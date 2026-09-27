@@ -66,6 +66,19 @@ tasks.whenTaskAdded {
     }
 }
 
+// AGP 9.4.0 emits mapping.prt to outputs/mapping/release but bundleRelease still
+// expects mapping.txt there. Copy the real R8 mapping so AAB packaging succeeds.
+tasks.register<Copy>("copyReleaseMapping") {
+    dependsOn("minifyReleaseWithR8")
+    from(layout.buildDirectory.dir("intermediates/mapping/release/minifyReleaseWithR8"))
+    include("mapping.txt")
+    into(layout.buildDirectory.dir("outputs/mapping/release"))
+}
+
+tasks.matching { it.name == "packageReleaseBundle" }.configureEach {
+    dependsOn("copyReleaseMapping")
+}
+
 dependencies {
     implementation(project(":core"))
 
