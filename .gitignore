@@ -14,3 +14,4 @@ captures
 *.hprof
 *.keystore
 *.jks
+keystore.properties

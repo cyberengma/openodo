@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -10,6 +12,19 @@ plugins {
 dependencyLocking {
     lockAllConfigurations()
 }
+
+// Release signing is optional and driven by keystore.properties (git-ignored)
+// or CI environment variables. When neither is present the release stays
+// unsigned (the GitHub workflow signs the APK with apksigner afterwards).
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
+}
+
+fun signingValue(fileKey: String, envKey: String): String? =
+    (keystoreProperties.getProperty(fileKey) ?: System.getenv(envKey))?.takeIf { it.isNotBlank() }
+
+val releaseStoreFilePath = signingValue("storeFile", "RELEASE_KEYSTORE")
 
 android {
     namespace = "ca.cyberengma.openodo"
@@ -24,6 +39,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseStoreFilePath != null) {
+            create("release") {
+                storeFile = file(releaseStoreFilePath)
+                storePassword = signingValue("storePassword", "RELEASE_STORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "RELEASE_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -31,6 +57,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (releaseStoreFilePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -105,8 +134,6 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.work.runtime.ktx)
-    implementation(libs.coil.compose)
-    implementation(libs.vico.compose.m3)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)

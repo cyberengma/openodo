@@ -6,13 +6,17 @@
 
 package ca.cyberengma.openodo.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -1120,6 +1124,16 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
     val v = state.vehicles.firstOrNull { it.id == state.activeVehicleId }
     var form by remember { mutableStateOf(open) }
     var editing by remember { mutableStateOf<Reminder?>(null) }
+    val context = LocalContext.current
+    var notificationsGranted by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationsGranted = granted
+    }
     LaunchedEffect(open) { if (open) { form = true; clear() } }
     if (v != null && (form || editing != null)) {
         ReminderForm(v, vm, { vm.saveReminder(it); form = false; editing = null }, { form = false; editing = null }, modifier, editing)
@@ -1137,6 +1151,19 @@ private fun RemindersScreen(state: ShellState, vm: AppViewModel, modifier: Modif
         TextButton(onClick = { form = true }) { Icon(Icons.Filled.Add, contentDescription = "Add reminder"); Spacer(Modifier.width(4.dp)); Text("Add") }
     }) {
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted) {
+                item {
+                    Card(
+                        Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    ) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Enable notifications to get due-reminder alerts.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = { notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) }) { Text("Enable") }
+                        }
+                    }
+                }
+            }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(filter == null, { filter = null }, label = { Text("All (${rs.size})") })

@@ -1,2 +1,9 @@
-Initial OpenOdo test release with offline vehicle logs, fuel and expense
-tracking, maintenance reminders, local persistence, and portability support.
+OpenOdo 0.1.0 — a private, offline vehicle log.
+
+• Log fuel and electric charging; enter quantity plus price or total and the
+other fills in automatically.
+• Unified fuel, service, repair, and upgrade history with multi-service expenses.
+• Maintenance reminders that reset automatically when work is logged.
+• Statistics: total cost, fuel economy, and per-category expense breakdowns.
+• Import Drivvo / Fuelio CSV, JSON backup & restore, CSV export.
+• Light and dark themes.
