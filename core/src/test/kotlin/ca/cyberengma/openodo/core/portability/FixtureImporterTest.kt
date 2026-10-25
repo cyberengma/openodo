@@ -19,7 +19,21 @@ class FixtureImporterTest {
         assertEquals(424_000L, result.domain.fuelEntries.first().odometer.value)
         assertEquals(33_040L, result.domain.fuelEntries.first().volume!!.value)
         assertEquals(5_000L, result.domain.fuelEntries.last().odometer.value)
+        assertEquals(35_500L, result.domain.fuelEntries.first().unitPrice!!.milli)
+        assertEquals(117_292L, result.domain.fuelEntries.first().totalCost.minor)
+        assertTrue(result.domain.fuelEntries.all { it.fuelLabel.isEmpty() })
     }
+
+    @Test fun `fuelio datetime rows parse to local dates`() {
+        val source = header() + "\"2024-05-10 14:30:00\",\"100\",\"10\",\"1\",\"40.0\",\"0\",\"\",\"\",\"\",\"\",\"0\",\"1\",\"0\",\"4.0\",\"0\",\"0\",\"1\",\"0\"\n" +
+            "\"2024-05-11T09:00\",\"120\",\"10\",\"1\",\"40.0\",\"0\",\"\",\"\",\"\",\"\",\"0\",\"1\",\"0\",\"4.0\",\"0\",\"0\",\"2\",\"0\"\n"
+        val result = FuelioImporter.import(source)
+        assertEquals(2, result.domain.fuelEntries.size)
+        assertEquals(java.time.LocalDate.of(2024, 5, 10), result.domain.fuelEntries[0].date)
+        assertEquals(java.time.LocalDate.of(2024, 5, 11), result.domain.fuelEntries[1].date)
+    }
+
+    private fun header() = "\"## Vehicle\"\n\"Name\",\"Description\",\"DistUnit\",\"FuelUnit\",\"ConsumptionUnit\",\"ImportCSVDateFormat\",\"VIN\",\"Insurance\",\"Plate\",\"Make\",\"Model\",\"Year\",\"TankCount\",\"Tank1Type\",\"Tank2Type\",\"Active\",\"Tank1Capacity\",\"Tank2Capacity\"\n\"Car\",\"\",\"0\",\"0\",\"0\",\"yyyy-MM-dd\",\"\",\"\",\"\",\"Make\",\"Model\",\"2020\",\"1\",\"100\",\"0\",\"1\",\"50\",\"0\"\n\"## Log\"\n\"Data\",\"Odo (km)\",\"Fuel (litres)\",\"Full\",\"Price (optional)\",\"l/100km (optional)\",\"latitude (optional)\",\"longitude (optional)\",\"City (optional)\",\"Notes (optional)\",\"Missed\",\"TankNumber\",\"FuelType\",\"VolumePrice\",\"StationID (optional)\",\"ExcludeDistance\",\"UniqueId\",\"TankCalc\"\n"
 
     @Test fun `drivvo fresh fixture imports vehicle and refueling rows`() {
         val result = DrivvoImporter.import(read("drivvo-sample.csv"))

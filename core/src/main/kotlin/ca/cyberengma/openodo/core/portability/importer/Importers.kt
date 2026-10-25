@@ -10,10 +10,26 @@ import ca.cyberengma.openodo.core.units.Metres
 import ca.cyberengma.openodo.core.units.Millilitres
 import java.io.StringReader
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 private val drivvoDate = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+private val fuelioDateFormats = listOf(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"),
+)
+
+private fun parseFuelioDate(text: String): LocalDate? {
+    runCatching { return LocalDate.parse(text) }
+    for (format in fuelioDateFormats) {
+        runCatching { return LocalDateTime.parse(text, format).toLocalDate() }
+    }
+    return null
+}
 
 object FuelioImporter {
     fun import(source: String): ImportResult {
@@ -25,14 +41,14 @@ object FuelioImporter {
         rows.drop(5).forEachIndexed { index, row ->
             val line = index + 6
             if (row.size < 18) return@forEachIndexed
-            val date = runCatching { LocalDate.parse(row[0]) }.getOrNull()
+            val date = parseFuelioDate(row[0])
             val odo = row[1].toLongOrNull()
-            if (date == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_DATE", "date is not ISO yyyy-MM-dd"); return@forEachIndexed }
+            if (date == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_DATE", "date is not ISO yyyy-MM-dd or a supported datetime"); return@forEachIndexed }
             if (odo == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_ODOMETER", "odometer is not numeric"); return@forEachIndexed }
             val litres = row[2].toBigDecimalOrNull()
-            val price = row[4].toBigDecimalOrNull()
+            val volumePrice = row[13].toBigDecimalOrNull()
             if (litres == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_VOLUME", "fuel volume is not numeric"); return@forEachIndexed }
-            entries += FuelEntry(entries.size + 1L, 1, date, Metres(odo * 1_000), FuelKind.LIQUID, Millilitres.litres(litres), null, price?.let { UnitPrice((it * java.math.BigDecimal(1_000)).toLong(), "USD") }, Money((row[4].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLong() ?: 0L), "USD"), row[12], row[3] == "1", row[10] == "1", row[8].ifBlank { null }, null, row[9].ifBlank { null }, 0, 0)
+            entries += FuelEntry(entries.size + 1L, 1, date, Metres(odo * 1_000), FuelKind.LIQUID, Millilitres.litres(litres), null, volumePrice?.let { UnitPrice((it * java.math.BigDecimal(1_000)).toLong(), "USD") }, Money((row[4].toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLong() ?: 0L), "USD"), "", row[3] == "1", row[10] == "1", row[8].ifBlank { null }, null, row[9].ifBlank { null }, 0, 0)
         }
         return ImportResult(PortabilityDomain(vehicles = listOf(vehicle), fuelEntries = entries), notes)
     }
