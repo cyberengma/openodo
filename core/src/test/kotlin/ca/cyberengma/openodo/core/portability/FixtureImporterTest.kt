@@ -33,7 +33,20 @@ class FixtureImporterTest {
         assertEquals(java.time.LocalDate.of(2024, 5, 11), result.domain.fuelEntries[1].date)
     }
 
-    private fun header() = "\"## Vehicle\"\n\"Name\",\"Description\",\"DistUnit\",\"FuelUnit\",\"ConsumptionUnit\",\"ImportCSVDateFormat\",\"VIN\",\"Insurance\",\"Plate\",\"Make\",\"Model\",\"Year\",\"TankCount\",\"Tank1Type\",\"Tank2Type\",\"Active\",\"Tank1Capacity\",\"Tank2Capacity\"\n\"Car\",\"\",\"0\",\"0\",\"0\",\"yyyy-MM-dd\",\"\",\"\",\"\",\"Make\",\"Model\",\"2020\",\"1\",\"100\",\"0\",\"1\",\"50\",\"0\"\n\"## Log\"\n\"Data\",\"Odo (km)\",\"Fuel (litres)\",\"Full\",\"Price (optional)\",\"l/100km (optional)\",\"latitude (optional)\",\"longitude (optional)\",\"City (optional)\",\"Notes (optional)\",\"Missed\",\"TankNumber\",\"FuelType\",\"VolumePrice\",\"StationID (optional)\",\"ExcludeDistance\",\"UniqueId\",\"TankCalc\"\n"
+    @Test fun `fuelio decimal odometer imports roundtrip`() {
+        val source = header() + "\"2026-10-26 00:06\",\"42650.0\",\"20.0\",\"1\",\"31.6\",,\"0.0\",\"0.0\",,,\"0\",\"1\",\"111\",\"1.58\",\"0\",\"0.0\",\"1\",\"0.0\",,\"guid1\",\"1792965988778\"\n"
+        val result = FuelioImporter.import(source)
+        assertEquals(1, result.domain.fuelEntries.size)
+        val entry = result.domain.fuelEntries.first()
+        assertEquals(java.time.LocalDate.of(2026, 10, 26), entry.date)
+        assertEquals(42_650_000L, entry.odometer.value)
+        assertEquals(20_000L, entry.volume!!.value)
+        assertEquals(3_160L, entry.totalCost.minor)
+        assertEquals(1_580L, entry.unitPrice!!.milli)
+        assertTrue(entry.fuelLabel.isEmpty())
+    }
+
+    private fun header() = "\"## Vehicle\"\n\"Name\",\"Description\",\"DistUnit\",\"FuelUnit\",\"ConsumptionUnit\",\"ImportCSVDateFormat\",\"VIN\",\"Insurance\",\"Plate\",\"Make\",\"Model\",\"Year\",\"TankCount\",\"Tank1Type\",\"Tank2Type\",\"Active\",\"Tank1Capacity\",\"Tank2Capacity\",\"FuelUnitTank2\",\"FuelConsumptionTank2\",\"guid\",\"lastupdated\"\n\"My Car\",\"Description\",\"0\",\"0\",\"0\",\"yyyy-MM-dd\",\"\",\"\",\"\",\"Honda\",\"CRF1100L\",\"2021\",\"1\",\"100\",\"0\",\"1\",\"20.0\",\"0.0\",\"0\",\"0\",\"guid0\",\"1792965958048\"\n\"## Log\"\n\"Data\",\"Odo (km)\",\"Fuel (litres)\",\"Full\",\"Price (optional)\",\"l/100km (optional)\",\"latitude (optional)\",\"longitude (optional)\",\"City (optional)\",\"Notes (optional)\",\"Missed\",\"TankNumber\",\"FuelType\",\"VolumePrice\",\"StationID (optional)\",\"ExcludeDistance\",\"UniqueId\",\"TankCalc\",\"Weather\",\"guid\",\"lastupdated\"\n"
 
     @Test fun `drivvo fresh fixture imports vehicle and refueling rows`() {
         val result = DrivvoImporter.import(read("drivvo-sample.csv"))

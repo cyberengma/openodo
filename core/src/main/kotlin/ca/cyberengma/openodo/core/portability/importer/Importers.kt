@@ -42,7 +42,7 @@ object FuelioImporter {
             val line = index + 6
             if (row.size < 18) return@forEachIndexed
             val date = parseFuelioDate(row[0])
-            val odo = row[1].toLongOrNull()
+            val odo = row[1].toBigDecimalOrNull()?.setScale(0, java.math.RoundingMode.HALF_EVEN)?.toLong()
             if (date == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_DATE", "date is not ISO yyyy-MM-dd or a supported datetime"); return@forEachIndexed }
             if (odo == null) { notes += ImportNote(line, ImportLevel.SKIP, "INVALID_ODOMETER", "odometer is not numeric"); return@forEachIndexed }
             val litres = row[2].toBigDecimalOrNull()
