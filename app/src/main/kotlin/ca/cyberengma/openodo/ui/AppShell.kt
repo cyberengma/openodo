@@ -1435,8 +1435,11 @@ private fun StatisticsScreen(state: ShellState, vm: AppViewModel, modifier: Modi
 private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val state by vm.state.collectAsState()
+    val activeCurrency = state.vehicles.firstOrNull { it.id == state.activeVehicleId }?.currency ?: "USD"
     var message by remember { mutableStateOf("No portability operation yet") }
     var preview by remember { mutableStateOf<ImportResult?>(null) }
+    var currency by remember { mutableStateOf(activeCurrency) }
 
     val json = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) scope.launch { context.contentResolver.openOutputStream(uri)?.use { it.write(vm.backupJson().toByteArray()) }; message = "JSON backup created" }
@@ -1457,7 +1460,12 @@ private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
         if (uri != null) scope.launch {
             val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
             if (text == null) message = "Could not read selected file"
-            else { preview = if (text.contains("#Refueling")) vm.importDrivvo(text) else vm.importFuelio(text); message = "Review import before applying" }
+            else {
+                val raw = if (text.contains("#Refueling")) vm.importDrivvo(text) else vm.importFuelio(text)
+                currency = activeCurrency
+                preview = raw.copy(domain = raw.domain.withCurrency(activeCurrency))
+                message = "Review import before applying"
+            }
         }
     }
 
@@ -1471,6 +1479,19 @@ private fun PortabilityScreen(vm: AppViewModel, modifier: Modifier) {
             item { OutlinedButton(onClick = { importer.launch(arrayOf("text/csv", "text/plain", "text/comma-separated-values")) }, Modifier.fillMaxWidth()) { Text("Import Drivvo / Fuelio CSV") } }
             preview?.let { p ->
                 item { ChartCard("Import preview", "${p.domain.fuelEntries.size} fuel • ${p.domain.expenseRecords.size} expenses • ${p.report.count { it.level.toString().contains("WARN") }} warnings • ${p.report.count { it.level.toString().contains("SKIP") }} skipped") }
+                item {
+                    TextField(
+                        value = currency,
+                        onValueChange = { code ->
+                            val normalized = code.uppercase().take(3)
+                            currency = normalized
+                            preview = p.copy(domain = p.domain.withCurrency(normalized))
+                        },
+                        Modifier.fillMaxWidth(),
+                        label = { Text("Currency (ISO code)") },
+                        singleLine = true,
+                    )
+                }
                 if (p.domain.recordTypes.isNotEmpty()) {
                     item {
                         Text("Expense type wiring", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
