@@ -404,12 +404,13 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
     var make by remember(initial) { mutableStateOf(initial?.make ?: "") }
     var model by remember(initial) { mutableStateOf(initial?.model ?: "") }
+    var year by remember(initial) { mutableStateOf(initial?.year?.toString() ?: "") }
     var currency by remember(initial) { mutableStateOf(initial?.currency ?: "USD") }
     var distance by remember(initial) { mutableStateOf(initial?.distanceUnit ?: DistanceUnit.KILOMETRES) }
     var volume by remember(initial) { mutableStateOf(initial?.volumeUnit ?: VolumeUnit.LITRES) }
     var energy by remember(initial) { mutableStateOf(initial?.energyUnit ?: EnergyUnit.KILOWATT_HOURS) }
     var fuelType by remember(initial) { mutableStateOf(initial?.fuelType ?: FuelType.FUEL) }
-    val dirty = name != (initial?.name ?: "") || make != (initial?.make ?: "") || model != (initial?.model ?: "") || currency != (initial?.currency ?: "USD") || distance != (initial?.distanceUnit ?: DistanceUnit.KILOMETRES) || volume != (initial?.volumeUnit ?: VolumeUnit.LITRES) || energy != (initial?.energyUnit ?: EnergyUnit.KILOWATT_HOURS) || fuelType != (initial?.fuelType ?: FuelType.FUEL)
+    val dirty = name != (initial?.name ?: "") || make != (initial?.make ?: "") || model != (initial?.model ?: "") || year != (initial?.year?.toString() ?: "") || currency != (initial?.currency ?: "USD") || distance != (initial?.distanceUnit ?: DistanceUnit.KILOMETRES) || volume != (initial?.volumeUnit ?: VolumeUnit.LITRES) || energy != (initial?.energyUnit ?: EnergyUnit.KILOWATT_HOURS) || fuelType != (initial?.fuelType ?: FuelType.FUEL)
     val requestCancel = rememberDiscardRequest(dirty, cancel)
 
     ScreenHeader(if (initial == null) "Add vehicle" else "Edit vehicle", modifier) {
@@ -420,6 +421,9 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
                     TextField(make, { make = it }, Modifier.weight(1f), label = { Text("Make") }, singleLine = true)
                     TextField(model, { model = it }, Modifier.weight(1f), label = { Text("Model") }, singleLine = true)
                 }
+            }
+            item {
+                TextField(year, { year = it.filter(Char::isDigit).take(4) }, Modifier.fillMaxWidth(), label = { Text("Year") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
             }
             item { Text("Fuel type", style = MaterialTheme.typography.titleSmall) }
             item { FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FuelType.entries.forEach { FilterChip(fuelType == it, { fuelType = it }, label = { Text(fuelTypeLabel(it)) }) } } }
@@ -441,7 +445,7 @@ private fun VehicleForm(save: (Vehicle) -> Unit, cancel: () -> Unit, modifier: M
                         onClick = {
                             save(Vehicle(
                                 id = initial?.id ?: 0, name = name, make = make, model = model,
-                                year = initial?.year ?: 2024, vin = initial?.vin, photoFileName = initial?.photoFileName,
+                                year = year.toIntOrNull() ?: 2024, vin = initial?.vin, photoFileName = initial?.photoFileName,
                                 distanceUnit = distance, volumeUnit = volume, energyUnit = energy,
                                 currency = currency.ifBlank { "USD" }, fuelType = fuelType,
                                 manualOdometer = initial?.manualOdometer,
