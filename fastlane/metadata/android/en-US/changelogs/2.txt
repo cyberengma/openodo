@@ -1,0 +1,6 @@
+OpenOdo 0.1.1 — fixes and due-reminder notifications.
+
+• Due/overdue reminders now send notifications (grant notification permission).
+• Fuelio CSV import fixes: timestamps, decimal odometer, miles units, correct
+currency selection, and service/expense (costs) logs.
+• Added a Year field when creating or editing a vehicle.
