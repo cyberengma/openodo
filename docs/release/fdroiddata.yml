@@ -12,7 +12,8 @@ AutoName: OpenOdo
 
 RepoType: git
 Repo: https://github.com/cyberengma/openodo.git
-Binaries: https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
+Binaries: 
+  https://github.com/cyberengma/openodo/releases/download/v%v/ca.cyberengma.openodo_%v.apk
 
 Builds:
   - versionName: 0.1.0
