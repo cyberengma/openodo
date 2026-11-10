@@ -1,0 +1,38 @@
+
+name: Android Debug APK
+
+on:
+  push:
+    branches:
+      - arabic
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: |
+          sdkmanager "platforms;android-37" "build-tools;37.0.0"
+
+      - name: Build APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenOdo-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
