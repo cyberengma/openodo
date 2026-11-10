@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-3.0-only
 package ca.cyberengma.openodo.ui.theme
 
@@ -11,26 +12,25 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Sleek "OpenOdo Mobile" palette — see docs/design/visual-system.md
-private val Teal = Color(0xFF2F6870)
-private val TealLight = Color(0xFF8FCBD0)
-private val OffWhite = Color(0xFFF7F8F7)
-private val Charcoal = Color(0xFF1B1D1C)
-private val SecondarySurface = Color(0xFFE3ECEC)
-private val SecondaryForeground = Color(0xFF23494E)
-private val MutedSurface = Color(0xFFE7EAE8)
-private val MutedForeground = Color(0xFF687371)
-private val AccentSurface = Color(0xFFDCEBED)
-private val AccentForeground = Color(0xFF24535A)
+// Emerald Green — OpenOdo Vehicle Theme
+private val Teal = Color(0xFF087F5B)
+private val TealLight = Color(0xFF34D399)
+private val OffWhite = Color(0xFFF7FAF8)
+private val Charcoal = Color(0xFF17211C)
+private val SecondarySurface = Color(0xFFD9F2E8)
+private val SecondaryForeground = Color(0xFF145A43)
+private val MutedSurface = Color(0xFFE7EEE9)
+private val MutedForeground = Color(0xFF687A70)
+private val AccentSurface = Color(0xFFC5EBDD)
+private val AccentForeground = Color(0xFF07543D)
 private val Destructive = Color(0xFFB3261E)
-private val Border = Color(0xFFD8DEDC)
-private val InputSurface = Color(0xFFF0F3F1)
-private val Ring = Color(0xFF5B9298)
+private val Border = Color(0xFFD2DED6)
+private val InputSurface = Color(0xFFF0F5F1)
+private val Ring = Color(0xFF34B887)
 
 private val LightColors = lightColorScheme(
     primary = Teal,
@@ -57,18 +57,18 @@ private val LightColors = lightColorScheme(
 
 private val DarkColors = darkColorScheme(
     primary = TealLight,
-    onPrimary = Color(0xFF00363D),
-    primaryContainer = Color(0xFF23494E),
-    onPrimaryContainer = AccentSurface,
-    secondary = Color(0xFF23494E),
-    onSecondary = SecondarySurface,
-    background = Color(0xFF101313),
-    onBackground = Color(0xFFE0E3E2),
-    surface = Color(0xFF181C1C),
-    onSurface = Color(0xFFE0E3E2),
-    surfaceVariant = Color(0xFF3F4948),
-    onSurfaceVariant = Color(0xFFBEC9C7),
-    outline = Color(0xFF899391),
+    onPrimary = Color(0xFF003D2B),
+    primaryContainer = Color(0xFF145A43),
+    onPrimaryContainer = Color(0xFFC5EBDD),
+    secondary = Color(0xFF145A43),
+    onSecondary = Color(0xFFD9F2E8),
+    background = Color(0xFF101713),
+    onBackground = Color(0xFFE0E9E3),
+    surface = Color(0xFF181F1B),
+    onSurface = Color(0xFFE0E9E3),
+    surfaceVariant = Color(0xFF29483D),
+    onSurfaceVariant = Color(0xFFB9C9BF),
+    outline = Color(0xFF668477),
     error = Color(0xFFF2B8B5),
 )
 
@@ -96,7 +96,10 @@ private val Typography = Typography(
 )
 
 @Composable
-fun OpenodoTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun OpenodoTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         shapes = Shapes,

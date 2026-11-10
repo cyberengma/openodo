@@ -485,6 +485,20 @@ private fun DashboardScreen(
         val reminders = viewModel.reminders(v.id).collectAsState(initial = emptyList()).value
         val typeNames = viewModel.recordTypes().collectAsState(initial = emptyList()).value.associate { it.id to it.name }
         val currentOdometer = currentOdometer(v, fuels, expenses)
+        var editingFuel by remember { mutableStateOf<FuelEntry?>(null) }
+        var deletingFuel by remember { mutableStateOf<FuelEntry?>(null) }
+
+        if (editingFuel != null) {
+            FuelForm(
+                v, viewModel,
+                { updated -> viewModel.saveFuel(updated); editingFuel = null },
+                { editingFuel = null },
+                Modifier,
+                editingFuel
+            )
+            return@ScreenHeader
+        }
+
         LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { HeroCard(v, currentOdometer) }
             item { QuickActions(onFuel, onExpense, onReminder) }
@@ -493,7 +507,26 @@ private fun DashboardScreen(
             items(reminders.take(3), key = { "reminder-${it.id}" }) { ReminderCard(it, DueCalculator.evaluate(it, currentOdometer, LocalDate.now()), typeNames[it.typeId] ?: "Service", v, currentOdometer, viewModel, { onEditReminder(it.id) }) }
             item { Text("Recent fuel", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
             if (fuels.isEmpty()) item { EmptyState("No fuel history", "Log your first fill-up or charging session.", "Add fuel", onFuel) }
-            items(fuels.take(3), key = { "fuel-${it.id}" }) { fuel -> RecentFuelRow(fuel, v) }
+            items(fuels.take(3), key = { "fuel-${it.id}" }) { fuel ->
+                RecentFuelRow(fuel, v, { editingFuel = fuel }, { deletingFuel = fuel })
+            }
+        }
+
+        deletingFuel?.let { fuel ->
+            AlertDialog(
+                onDismissRequest = { deletingFuel = null },
+                title = { Text("Delete fuel entry?") },
+                text = { Text("Delete ${fuel.fuelLabel.ifBlank { "Fuel" }} from ${fuel.date}? This cannot be undone.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.deleteFuel(fuel)
+                        deletingFuel = null
+                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deletingFuel = null }) { Text("Cancel") }
+                }
+            )
         }
     }
 }
@@ -774,18 +807,62 @@ private fun ExpenseHistoryItem(r: ExpenseRecord, typeById: Map<Long, RecordType>
 }
 
 @Composable
-private fun RecentFuelRow(f: FuelEntry, v: Vehicle) {
+private fun RecentFuelRow(
+    f: FuelEntry,
+    v: Vehicle,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val locale = Locale.getDefault()
     val title = f.stationName ?: f.fuelLabel.ifBlank { if (f.kind == FuelKind.ELECTRIC) "Charging" else "Fuel" }
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(imageVector = if (f.kind == FuelKind.ELECTRIC) Icons.Outlined.Bolt else Icons.Outlined.LocalGasStation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Text("${VehicleValueFormatter.formatDistance(f.odometer, v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)} • ${f.date}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (f.kind == FuelKind.ELECTRIC) Icons.Outlined.Bolt else Icons.Outlined.LocalGasStation,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${VehicleValueFormatter.formatDistance(f.odometer, v.distanceUnit, locale)} ${distanceSymbol(v.distanceUnit)} • ${f.date}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    "${f.totalCost.currency} ${VehicleValueFormatter.formatMoney(f.totalCost, locale)}",
+                    fontWeight = FontWeight.SemiBold
+                )
             }
-            Text("${f.totalCost.currency} ${VehicleValueFormatter.formatMoney(f.totalCost, locale)}", fontWeight = FontWeight.SemiBold)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onEdit) {
+                    Icon(Icons.Outlined.Edit, contentDescription = "Edit", Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Edit")
+                }
+                TextButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = "Delete",
+                        Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
